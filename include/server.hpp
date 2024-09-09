@@ -56,6 +56,9 @@ class Server
 
 		void	start();						// Start the server
 		void	stop();							// Stop the server
+		// Commands
+
+		void handlePassCommand(int clientFd, const std::vector<std::string>& params);
 
 	private:
 

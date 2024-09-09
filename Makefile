@@ -21,11 +21,14 @@ ifdef leak_docker
 endif
 
 SRC_DIR				:= ./src/
+CMD_SRC_DIR			:= commands/
 
 SRCS				:=	main.cpp \
-						server.cpp
+						server.cpp \
+						$(CMD_SRC_DIR)commands.cpp \
 
 OBJ_DIR				:= ./obj/
+CMD_DIR				:= $(OBJ_DIR)commands
 
 OBJS				:= $(addprefix $(OBJ_DIR), $(SRCS:.cpp=.o))
 
@@ -36,6 +39,7 @@ $(NAME):			$(OBJ_DIR) $(OBJS)
 
 $(OBJ_DIR):
 	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(CMD_DIR)
 
 $(OBJ_DIR)%.o:		$(SRC_DIR)%.cpp
 	$(CXX) $(CXXFLAGS) $(HEADERS) -c $< -o $@
