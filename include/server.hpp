@@ -10,6 +10,7 @@
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <stdexcept>
+# include <sstream>
 
 # include <arpa/inet.h>
 # include <fcntl.h>

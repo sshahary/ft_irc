@@ -85,6 +85,23 @@ void Server::receiveData(int clientFd)
 		std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
 		// process received data
 		// e.g.: processClientRequest(clientFd, buffer);
+		 // Parse the buffer to extract the command and parameters
+		std::string command;
+		std::vector<std::string> params;
+
+		std::istringstream iss(buffer);
+		iss >> command;
+
+		std::string param;
+		while (iss >> param)
+			params.push_back(param);
+
+		// Handle the parsed command
+		if (command == "PASS")
+			handlePassCommand(clientFd, params);
+		else
+			std::cerr << RED << "Unknown command: " << command << WHI << std::endl;
+		// Handle unknown command, if necessar
 	}
 }
 
