@@ -2,8 +2,8 @@ NAME				:= ircserv
 
 CXX					:= g++
 
-CXXFLAGS			:= -std=c++98 -pedantic -Wall -Wextra -Werror -g3
-LDFLAGS				:= -std=c++98 -pedantic -g3
+CXXFLAGS			:= -std=c++17 -pedantic -Wall -Wextra -Werror -g3
+LDFLAGS				:= -std=c++17 -pedantic -g3
 HEADERS				:=	-I ./include
 
 ifdef leak_mac

@@ -16,6 +16,7 @@
 # include <fcntl.h>
 # include <unistd.h>
 # include <cstring>
+# include <map>
 
 // Color constants for output
 # define RED "\033[1;31m"
@@ -30,20 +31,28 @@ class Client
 
 		// // ============ orthodox canonical form ============================
 		Client();
+		//sshahary
+		Client(int fd, const std::string &ipAddress);
 		
 
 		// // ============ getters ============================================
 		int			getFd() const;
 		std::string	getIpAddress() const;
+		//sshahary
+		std::string	getNickname() const;
 
 		// // ============ setters ============================================
 		void		setFd(int fd);
 		void		setIpAddress(const std::string &ipAddress);
+		//sshahary
+		void		setNickname(const std::string &nickname);
 
 	private:
 
 		int				clientFd;				// Client file descriptor
 		std::string		ipAddress;				// Client IP address
+		//sshahary
+		std::string		nickname;				// Client nickname
 };
 
 // Server class to manage server operations
@@ -59,7 +68,8 @@ class Server
 		void	stop();							// Stop the server
 		// Commands
 
-		void handlePassCommand(int clientFd, const std::vector<std::string>& params);
+		void 	handlePassCommand(int clientFd, const std::vector<std::string>& params);
+		void	handleNickCommand(int clientFd, const std::vector<std::string>& params);
 
 	private:
 
@@ -70,6 +80,12 @@ class Server
 		void	closeAllConnections();			// Close all open file descriptors
 		void	removeClient(int clientFd);		// Remove client from the list
 
+		//sshahary
+		bool	isNicknameTaken(const std::string& nickname) const;  // Check if nickname is taken
+		void	updateNicknameTracking(const std::string& oldNickname, const std::string& newNickname, int clientFd);
+		void	removeNicknameTracking(const std::string& nickname);
+		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
+
 		int			serverPort;					// Port on which the server is running
 		std::string	serverPassword;				// Password for the server
 		int			serverFd;					// Server socket file descriptor
@@ -77,6 +93,8 @@ class Server
 
 		std::vector<Client>				clients;	// List of connected clients
 		std::vector<struct pollfd>		pollFds;	// Polling structures for clients
+		//sshahary
+		std::map<std::string, int> nicknames; // Map to track nicknames to client file descriptors
 };
 
 #endif

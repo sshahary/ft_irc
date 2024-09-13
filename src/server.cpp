@@ -3,8 +3,10 @@
 
 // ============ Client - orthodox canonical form ==============================
 
-Client::Client() : clientFd(-1) {}
+Client::Client() : clientFd(-1), ipAddress(""), nickname("") {}
 
+Client::Client(int fd, const std::string &ipAddress)			//sshahary
+	: clientFd(fd), ipAddress(ipAddress), nickname("") {}
 // Client class implementation ================================================
 
 int Client::getFd() const { return clientFd; }
@@ -14,6 +16,12 @@ void Client::setFd(int fd) { clientFd = fd; }
 std::string Client::getIpAddress() const { return ipAddress; }
 
 void Client::setIpAddress(const std::string &ip) { ipAddress = ip; }
+
+//sshahary
+
+std::string Client::getNickname() const { return nickname; }
+
+void Client::setNickname(const std::string &nick) { nickname = nick; }
 
 // ============ Server - orthodox canonical form ==============================
 
@@ -99,9 +107,8 @@ void Server::receiveData(int clientFd)
 		// Handle the parsed command
 		if (command == "PASS")
 			handlePassCommand(clientFd, params);
-		else
-			std::cerr << RED << "Unknown command: " << command << WHI << std::endl;
-		// Handle unknown command, if necessar
+		 else if (command == "NICK")
+			handleNickCommand(clientFd, params);
 	}
 }
 
