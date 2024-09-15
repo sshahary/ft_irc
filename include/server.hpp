@@ -89,6 +89,8 @@ class Server
 		void	removeNicknameTracking(const std::string& nickname);
 		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
 
+		Client* findClientByFd(int clientFd);	// Find client by file descriptor
+
 		int			serverPort;					// Port on which the server is running
 		std::string	serverPassword;				// Password for the server
 		int			serverFd;					// Server socket file descriptor
