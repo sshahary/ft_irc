@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/13 17:44:34 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/15 13:09:58 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,20 +14,32 @@
 
 void Server::handlePassCommand(int clientFd, const std::vector<std::string>& params)
 {
+	Client* client = findClientByFd(clientFd);
+	if (client == NULL)
+		return;  // If client not found, do nothing
+
+	if (client->isAuthenticated())
+	{
+		sendError(clientFd, "ERR_ALREADYREGISTRED", "You may not reregister");
+		return;
+	}
+
 	if (params.size() < 1)
 	{
 		std::cerr << RED << "No password provided" << WHI << std::endl;
+		sendError(clientFd, "ERR_NEEDMOREPARAMS", "No password provided");
 		return ;
 	}
 	std::string providedPassword = params[0];
 	if (providedPassword == serverPassword)
 	{
 		std::cout << GRE << "Client authenticated successfully" << WHI << std::endl;
-		// Set client authenticated (not shown, but you would likely have a flag in Client)
+		client->setAuthenticated(true);
 	}
 	else
 	{
 		std::cerr << RED << "Invalid password" << WHI << std::endl;
+		sendError(clientFd, "ERR_PASSWDMISMATCH", "Invalid password");
 		removeClient(clientFd);
 	}
 }
@@ -35,6 +47,10 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 // Handle the NICK command
 void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
 {
+	Client* client = findClientByFd(clientFd);
+	if (client == NULL)
+		return;
+
 	if (params.empty())
 	{
 		sendError(clientFd, "ERR_NONICKNAMEGIVEN", "No nickname given");
@@ -50,17 +66,19 @@ void Server::handleNickCommand(int clientFd, const std::vector<std::string>& par
 		return;
 	}
 
-	// Find the client and update their nickname
-	for (auto &client : clients)
+	// Update the client's nickname and the nickname tracking
+	std::string oldNickname = client->getNickname();
+	client->setNickname(newNickname);
+	client->setNickSet(true);
+	updateNicknameTracking(oldNickname, newNickname, clientFd);
+
+	// Log the change
+	std::cout << GRE << "Client " << clientFd << " set nickname to '" << newNickname << "'" << WHI << std::endl;
+	 // Check if USER is also set to mark the client as registered
+	if (client->isAuthenticated() && client->hasNickSet())
 	{
-		if (client.getFd() == clientFd)
-		{
-			std::string oldNickname = client.getNickname();
-			client.setNickname(newNickname);
-			updateNicknameTracking(oldNickname, newNickname, clientFd);
-			std::cout << GRE << "Client " << clientFd << " set nickname to '" << newNickname << "'" << WHI << std::endl;
-			break;
-		}
+		client->setRegistered(true);
+		std::cout << GRE << "Client " << clientFd << " is now fully registered" << WHI << std::endl;
 	}
 }
 
@@ -74,8 +92,7 @@ bool Server::isNicknameTaken(const std::string& nickname) const
 void Server::updateNicknameTracking(const std::string& oldNickname, const std::string& newNickname, int clientFd)
 {
 	if (!oldNickname.empty())
-		nicknames.erase(oldNickname);
-	
+		removeNicknameTracking(oldNickname);
 	nicknames[newNickname] = clientFd;
 }
 
@@ -90,4 +107,39 @@ void Server::sendError(int clientFd, const std::string& errorCode, const std::st
 {
 	std::string errorMessage = ":" + errorCode + " " + message + "\r\n";
 	send(clientFd, errorMessage.c_str(), errorMessage.length(), 0);
+}
+
+
+//USer command
+void Server::handleUserCommand(int clientFd, const std::vector<std::string>& params)
+{
+	std::cout<<"clientfd: "<<clientFd<<"pars: "<<&params<<std::endl;
+	Client* client = findClientByFd(clientFd);
+	if (client == NULL)
+		return;
+
+	if (client->isRegistered())
+	{
+		sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
+		return;
+	}
+
+	if (params.size() < 4)
+	{
+		sendError(clientFd, "ERR_NEEDMOREPARAMS", ":Not enough parameters");
+		return;
+	}
+
+	if (!client->hasNickSet())
+	{
+		sendError(clientFd, "ERR_NONICKNAMEGIVEN", ":Nickname must be provided before USER");
+		return;
+	}
+
+	client->setRegistered(true);
+
+	std::string username = params[0];
+	std::string realname = params[3]; // Real name prefixed with ':'
+
+	std::cout << GRE << "Client " << clientFd << " registered with username '" << username << "' and real name '" << realname << "'" << WHI << std::endl;
 }

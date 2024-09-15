@@ -26,6 +26,7 @@ CMD_SRC_DIR			:= commands/
 SRCS				:=	main.cpp \
 						server.cpp \
 						$(CMD_SRC_DIR)commands.cpp \
+						$(CMD_SRC_DIR)authenticated.cpp \
 
 OBJ_DIR				:= ./obj/
 CMD_DIR				:= $(OBJ_DIR)commands

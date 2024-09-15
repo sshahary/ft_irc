@@ -41,6 +41,8 @@ class Client
 		//sshahary
 		std::string	getNickname() const;
 		bool		isAuthenticated() const;
+		bool		isRegistered() const;
+		bool		hasNickSet() const;
 
 		// // ============ setters ============================================
 		void		setFd(int fd);
@@ -48,6 +50,9 @@ class Client
 		//sshahary
 		void		setNickname(const std::string &nickname);
 		void		setAuthenticated(bool status);
+		void		setRegistered(bool status);
+		void		setNickSet(bool status);
+
 
 	private:
 
@@ -56,6 +61,8 @@ class Client
 		//sshahary
 		std::string		nickname;				// Client nickname
 		bool			authenticated;
+		bool			registered;				// For tracking if both NICK and USER commands are sent
+		bool			nickSet; // New flag to track if NICK is set
 };
 
 // Server class to manage server operations
@@ -71,8 +78,9 @@ class Server
 		void	stop();							// Stop the server
 		// Commands
 
-		void 	handlePassCommand(int clientFd, const std::vector<std::string>& params);
+		void	handlePassCommand(int clientFd, const std::vector<std::string>& params);
 		void	handleNickCommand(int clientFd, const std::vector<std::string>& params);
+		void	handleUserCommand(int clientFd, const std::vector<std::string>& params);
 
 	private:
 

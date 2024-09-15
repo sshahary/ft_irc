@@ -56,6 +56,13 @@ void Server::closeAllConnections()
 // Method to remove a client from the server's lists
 void Server::removeClient(int clientFd)
 {
+	// Find and remove the client from the nickname tracking
+	Client* client = findClientByFd(clientFd);
+	if (client)
+	{
+		if (!client->getNickname().empty())
+			removeNicknameTracking(client->getNickname());
+	}
 	for (size_t i = 0; i < pollFds.size(); ++i)
 	{
 		if (pollFds[i].fd == clientFd)
@@ -72,6 +79,7 @@ void Server::removeClient(int clientFd)
 			break;
 		}
 	}
+	close(clientFd);
 }
 
 // Receive data from a connected client
@@ -92,11 +100,12 @@ void Server::receiveData(int clientFd)
 		buffer[bytesReceived] = '\0';
 		std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
 		// process received data
-		// e.g.: processClientRequest(clientFd, buffer);
-		 // Parse the buffer to extract the command and parameters
+		 // Find the client and check if they are authenticated
+		Client* client = findClientByFd(clientFd);
+		if (client == NULL)
+			return;
 		std::string command;
 		std::vector<std::string> params;
-
 		std::istringstream iss(buffer);
 		iss >> command;
 
@@ -105,10 +114,16 @@ void Server::receiveData(int clientFd)
 			params.push_back(param);
 
 		// Handle the parsed command
-		if (command == "PASS")
+		 if (command == "PASS")
 			handlePassCommand(clientFd, params);
-		 else if (command == "NICK")
+		else if (command == "NICK")
 			handleNickCommand(clientFd, params);
+		else if (command == "USER")
+			handleUserCommand(clientFd, params);
+		else if (!client->isRegistered())
+			sendError(clientFd, "ERR_NOTREGISTERED", "You must authenticate and register before sending other commands");
+		else
+			sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
 	}
 }
 

@@ -1,8 +1,25 @@
 #include "../../include/server.hpp"
 
-bool Client::isAuthenticated() const { return authenticated; }
+bool Client::isAuthenticated() const
+{
+	return authenticated;
+}
 
-void Client::setAuthenticated(bool status) { authenticated = status; }
+void Client::setAuthenticated(bool status)
+{
+	authenticated = status;
+}
+
+bool Client::isRegistered() const
+{
+	return registered;
+}
+
+void Client::setRegistered(bool status)
+{
+	registered = status;
+}
+
 
 Client* Server::findClientByFd(int clientFd)
 {
@@ -15,5 +32,15 @@ Client* Server::findClientByFd(int clientFd)
 			return &clients[i];  // Return a pointer to the client
 		}
 	}
-	return NULL;  // If no client matches, return nullptr
+	return NULL;  // If no client matches, return NULL
+}
+
+bool Client::hasNickSet() const
+{
+	return nickSet;
+}
+
+void Client::setNickSet(bool status)
+{
+	nickSet = status;
 }
