@@ -40,12 +40,14 @@ class Client
 		std::string	getIpAddress() const;
 		//sshahary
 		std::string	getNickname() const;
+		bool		isAuthenticated() const;
 
 		// // ============ setters ============================================
 		void		setFd(int fd);
 		void		setIpAddress(const std::string &ipAddress);
 		//sshahary
 		void		setNickname(const std::string &nickname);
+		void		setAuthenticated(bool status);
 
 	private:
 
@@ -53,6 +55,7 @@ class Client
 		std::string		ipAddress;				// Client IP address
 		//sshahary
 		std::string		nickname;				// Client nickname
+		bool			authenticated;
 };
 
 // Server class to manage server operations
