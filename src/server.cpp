@@ -118,14 +118,23 @@ void Server::receiveData(int clientFd)
 			handlePassCommand(clientFd, params);
 		else if (command == "NICK")
 			handleNickCommand(clientFd, params);
-		else if (command == "USER")
-			handleUserCommand(clientFd, params);
-		else if (!client->isRegistered())
-			sendError(clientFd, "ERR_NOTREGISTERED", "You must authenticate and register before sending other commands");
-		else
-			sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
+		// else if (command == "USER")
+		// 	handleUserCommand(clientFd, params);
+		// else if (!client->isRegistered())
+		// 	sendError(clientFd, "ERR_NOTREGISTERED", "You must authenticate and register before sending other commands");
+		// else
+		// 	sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
+
+		// Send response back to the client (optional, based on command processing result)
+		// For example, you can return acknowledgment or an error message depending on the command handling logic.
+		std::string response = "Command processed successfully"; // Placeholder response
+		if (send(clientFd, response.c_str(), response.length(), 0) == -1)
+		{
+			std::cout << "send() error: " << strerror(errno) << std::endl;
+		}
 	}
 }
+
 
 // Accept a new client connection
 void Server::acceptNewClient()
