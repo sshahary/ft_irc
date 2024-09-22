@@ -104,6 +104,7 @@ class Server
 		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
 
 		Client* findClientByFd(int clientFd);	// Find client by file descriptor
+		Client* findClientByNickname(const std::string &nickname);	
 
 		int			serverPort;					// Port on which the server is running
 		std::string	serverPassword;				// Password for the server
@@ -113,7 +114,7 @@ class Server
 		std::vector<Client>				clients;	// List of connected clients
 		std::vector<struct pollfd>		pollFds;	// Polling structures for clients
 		//sshahary
-		std::map<std::string, int> nicknames; // Map to track nicknames to client file descriptors
+		std::map<std::string, int>		nicknames; // Map to track nicknames to client file descriptors
 };
 
 #endif

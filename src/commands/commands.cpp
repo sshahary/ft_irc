@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/22 18:19:24 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/22 18:43:02 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,11 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 	Client* client = findClientByFd(clientFd);
 	if (client == NULL)
 		return;
-	if (client->isAuthenticated())
-	{
-		sendError(clientFd, "ERR_ALREADYREGISTRED", "PASS :You are already authenticated");
-		return;
-	}
+	// if (client->isAuthenticated())
+	// {
+	// 	sendError(clientFd, "ERR_ALREADYREGISTRED", "PASS :You are already authenticated");
+	// 	return;
+	// }
 	std::string providedPassword = params[0];
 	if (providedPassword == serverPassword)
 	{
@@ -46,6 +46,11 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 // Handle the NICK command
 void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
 {
+	if (params.size() < 1)
+	{
+        sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
+        return;
+    }
 	Client* client = findClientByFd(clientFd);
 	if (client == NULL)
 		return;
@@ -117,11 +122,11 @@ void Server::handleUserCommand(int clientFd, const std::vector<std::string>& par
 	if (client == NULL)
 		return;
 
-	if (client->isRegistered())
-	{
-		sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
-		return;
-	}
+	// if (client->isRegistered())
+	// {
+	// 	sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
+	// 	return;
+	// }
 
 	if (params.size() < 4)
 	{
