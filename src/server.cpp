@@ -118,8 +118,8 @@ void Server::receiveData(int clientFd)
 			handlePassCommand(clientFd, params);
 		else if (command == "NICK")
 			handleNickCommand(clientFd, params);
-		// else if (command == "USER")
-		// 	handleUserCommand(clientFd, params);
+		else if (command == "USER")
+			handleUserCommand(clientFd, params);
 		// else if (!client->isRegistered())
 		// 	sendError(clientFd, "ERR_NOTREGISTERED", "You must authenticate and register before sending other commands");
 		// else

@@ -6,43 +6,64 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/20 10:07:57 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/22 16:15:14 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
 
+
 void Server::handlePassCommand(int clientFd, const std::vector<std::string>& params)
 {
-	Client* client = findClientByFd(clientFd);
-	if (client == NULL)
-		return;  // If client not found, do nothing
-
-	if (client->isAuthenticated())
-	{
-		sendError(clientFd, "ERR_ALREADYREGISTRED", "You may not reregister");
-		return;
-	}
-
 	if (params.size() < 1)
 	{
 		std::cerr << RED << "No password provided" << WHI << std::endl;
-		sendError(clientFd, "ERR_NEEDMOREPARAMS", "No password provided");
 		return ;
 	}
 	std::string providedPassword = params[0];
 	if (providedPassword == serverPassword)
 	{
 		std::cout << GRE << "Client authenticated successfully" << WHI << std::endl;
-		client->setAuthenticated(true);
+		// Set client authenticated (not shown, but you would likely have a flag in Client)
 	}
 	else
 	{
 		std::cerr << RED << "Invalid password" << WHI << std::endl;
-		sendError(clientFd, "ERR_PASSWDMISMATCH", "Invalid password");
 		removeClient(clientFd);
 	}
 }
+
+// void Server::handlePassCommand(int clientFd, const std::vector<std::string>& params)
+// {
+// 	Client* client = findClientByFd(clientFd);
+// 	if (client == NULL)
+// 		return;  // If client not found, do nothing
+
+// 	if (client->isAuthenticated())
+// 	{
+// 		sendError(clientFd, "ERR_ALREADYREGISTRED", "You may not reregister");
+// 		return;
+// 	}
+
+// 	if (params.size() < 1)
+// 	{
+// 		std::cerr << RED << "No password provided" << WHI << std::endl;
+// 		sendError(clientFd, "ERR_NEEDMOREPARAMS", "No password provided");
+// 		return ;
+// 	}
+// 	std::string providedPassword = params[0];
+// 	if (providedPassword == serverPassword)
+// 	{
+// 		std::cout << GRE << "Client authenticated successfully" << WHI << std::endl;
+// 		client->setAuthenticated(true);
+// 	}
+// 	else
+// 	{
+// 		std::cerr << RED << "Invalid password" << WHI << std::endl;
+// 		sendError(clientFd, "ERR_PASSWDMISMATCH", "Invalid password");
+// 		removeClient(clientFd);
+// 	}
+// }
 
 // Handle the NICK command
 void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
