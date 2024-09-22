@@ -39,6 +39,8 @@ class Client
 		int			getFd() const;
 		std::string	getIpAddress() const;
 		//sshahary
+		std::string	getUsername() const;
+		std::string	getRealName() const;
 		std::string	getNickname() const;
 		bool		isAuthenticated() const;
 		bool		isRegistered() const;
@@ -48,6 +50,8 @@ class Client
 		void		setFd(int fd);
 		void		setIpAddress(const std::string &ipAddress);
 		//sshahary
+		void		setUsername(const std::string &user);
+		void		setRealName(const std::string &realName);
 		void		setNickname(const std::string &nickname);
 		void		setAuthenticated(bool status);
 		void		setRegistered(bool status);
@@ -59,6 +63,8 @@ class Client
 		int				clientFd;				// Client file descriptor
 		std::string		ipAddress;				// Client IP address
 		//sshahary
+		std::string username;
+		std::string realName;
 		std::string		nickname;				// Client nickname
 		bool			authenticated;
 		bool			registered;				// For tracking if both NICK and USER commands are sent

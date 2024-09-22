@@ -44,3 +44,23 @@ void Client::setNickSet(bool status)
 {
 	nickSet = status;
 }
+
+std::string Client::getUsername() const
+{
+	return username;
+}
+
+void Client::setUsername(const std::string &user)
+{
+	username = user;
+}
+
+std::string Client::getRealName() const
+{
+	return realName;
+}
+
+void Client::setRealName(const std::string &realName)
+{
+	this->realName = realName;
+}
