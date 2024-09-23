@@ -5,14 +5,14 @@
 #include <iostream>
 #include <set>
 #include "server.hpp"
-class Commands
-{
-	public:
-	// handleCommandPass();
-};
-#endif
+// class Commands
+// {
+// 	public:
+// 	// handleCommandPass();
+// };
 
-class Channel {
+class Channel
+{
 private:
 	std::string channelName;
 	std::string topic;
@@ -22,35 +22,41 @@ private:
 	std::set<int> operators; // Store operator file descriptors
 	bool inviteOnly;
 	bool topicRestricted;
-	
+
 public:
-	Channel(const std::string &name) : channelName(name), inviteOnly(false), topicRestricted(false), userLimit(0) {}
+	// Constructor
+	Channel(const std::string &name);
 
-	bool isClientInChannel(int clientFd) const { return clients.find(clientFd) != clients.end(); }
-	bool isOperator(int clientFd) const { return operators.find(clientFd) != operators.end(); }
+	// Client Management
+	bool isClientInChannel(int clientFd) const;
+	void addClient(int clientFd);
+	void removeClient(int clientFd);
 
-	void addClient(int clientFd) { clients.insert(clientFd); }
-	void removeClient(int clientFd) { clients.erase(clientFd); }
+	// Operator Management
+	bool isOperator(int clientFd) const;
+	void addOperator(int clientFd);
+	void removeOperator(int clientFd);
 
-	void setTopic(const std::string &newTopic) { topic = newTopic; }
-	std::string getTopic() const { return topic; }
+	// Topic Management
+	void setTopic(const std::string &newTopic);
+	std::string getTopic() const;
 
-	// Channel Mode Management (e.g., invite-only, topic restricted, etc.)
-	void setInviteOnly(bool value) { inviteOnly = value; }
-	bool isInviteOnly() const { return inviteOnly; }
+	// Channel Mode Management
+	void setInviteOnly(bool value);
+	bool isInviteOnly() const;
 
-	void setTopicRestricted(bool value) { topicRestricted = value; }
-	bool isTopicRestricted() const { return topicRestricted; }
+	void setTopicRestricted(bool value);
+	bool isTopicRestricted() const;
 
-	// Operators Management
-	void addOperator(int clientFd) { operators.insert(clientFd); }
-	void removeOperator(int clientFd) { operators.erase(clientFd); }
+	// Password Management
+	void setPassword(const std::string &pass);
+	bool checkPassword(const std::string &pass) const;
 
-	// Password/Key Management
-	void setPassword(const std::string &pass) { password = pass; }
-	bool checkPassword(const std::string &pass) const { return password == pass; }
-
-	// User limit management
-	void setUserLimit(int limit) { userLimit = limit; }
-	bool isUserLimitExceeded() const { return userLimit > 0 && clients.size() >= userLimit; }
+	// User Limit Management
+	void setUserLimit(int limit);
+	bool isUserLimitExceeded() const;
 };
+
+#endif
+
+
