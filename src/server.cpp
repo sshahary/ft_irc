@@ -113,20 +113,24 @@ void Server::receiveData(int clientFd)
 		while (iss >> param)
 			params.push_back(param);
 
-		// Handle the parsed command
-		 if (command == "PASS")
+		// Handle commands
+		 // Handle the parsed command
+		if (command == "PASS")
 			handlePassCommand(clientFd, params);
 		else if (command == "NICK")
 			handleNickCommand(clientFd, params);
 		else if (command == "USER")
 			handleUserCommand(clientFd, params);
-		// else if (!client->isRegistered())
-		// 	sendError(clientFd, "ERR_NOTREGISTERED", "You must authenticate and register before sending other commands");
+		else if (command == "JOIN")
+			handleJoinCommand(clientFd, params);
+		// else if (command == "PART")
+		// 	handlePartCommand(clientFd, params);
+		// else if (command == "PRIVMSG")
+		// 	handlePrivmsgCommand(clientFd, params);
+		// else if (command == "QUIT")
+		// 	handleQuitCommand(clientFd, params);
 		// else
 		// 	sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
-
-		// Send response back to the client (optional, based on command processing result)
-		// For example, you can return acknowledgment or an error message depending on the command handling logic.
 		std::string response = "Command processed successfully"; // Placeholder response
 		if (send(clientFd, response.c_str(), response.length(), 0) == -1)
 		{

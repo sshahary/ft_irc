@@ -1,4 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   authenticated.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/23 09:54:11 by sshahary          #+#    #+#             */
+/*   Updated: 2024/09/23 09:54:12 by sshahary         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/server.hpp"
+#include "../../include/commands.hpp"
 
 bool Client::isAuthenticated() const
 {

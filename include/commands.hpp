@@ -17,11 +17,11 @@ private:
 	std::string channelName;
 	std::string topic;
 	std::string password;
-	int userLimit;
+	int		userLimit;        // Declared before inviteOnly
+	bool	inviteOnly;      // Declared after userLimit
+	bool	topicRestricted;
 	std::set<int> clients; // Store the file descriptors of clients in the channel
 	std::set<int> operators; // Store operator file descriptors
-	bool inviteOnly;
-	bool topicRestricted;
 
 public:
 	// Constructor
@@ -31,6 +31,7 @@ public:
 	bool isClientInChannel(int clientFd) const;
 	void addClient(int clientFd);
 	void removeClient(int clientFd);
+	std::string getName() const;
 
 	// Operator Management
 	bool isOperator(int clientFd) const;

@@ -17,6 +17,7 @@
 # include <unistd.h>
 # include <cstring>
 # include <map>
+# include "commands.hpp"
 
 // Color constants for output
 # define RED "\033[1;31m"
@@ -71,6 +72,8 @@ class Client
 		bool			nickSet; // New flag to track if NICK is set
 };
 
+class Channel;
+
 // Server class to manage server operations
 class Server
 {
@@ -88,6 +91,11 @@ class Server
 		void	handleNickCommand(int clientFd, const std::vector<std::string>& params);
 		void	handleUserCommand(int clientFd, const std::vector<std::string>& params);
 
+		//other COmmands
+		void	handleJoinCommand(int clientFd, const std::vector<std::string>& params);
+
+		Channel*	findChannelByName(const std::string& channelName);
+
 	private:
 
 		void	createSocket();					// Create and bind server socket
@@ -103,8 +111,9 @@ class Server
 		void	removeNicknameTracking(const std::string& nickname);
 		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
 
-		Client* findClientByFd(int clientFd);	// Find client by file descriptor
-		Client* findClientByNickname(const std::string &nickname);	
+		Client*		findClientByFd(int clientFd);	// Find client by file descriptor
+		Client*		findClientByNickname(const std::string &nickname);
+
 
 		int			serverPort;					// Port on which the server is running
 		std::string	serverPassword;				// Password for the server
@@ -115,6 +124,7 @@ class Server
 		std::vector<struct pollfd>		pollFds;	// Polling structures for clients
 		//sshahary
 		std::map<std::string, int>		nicknames; // Map to track nicknames to client file descriptors
+		std::vector<Channel*> channels; // Stores pointers to Channel objects
 };
 
 #endif

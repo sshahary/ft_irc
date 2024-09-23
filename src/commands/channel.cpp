@@ -6,15 +6,16 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/23 09:23:46 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/23 09:59:12 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/commands.hpp"
+#include "../../include/server.hpp"
 
 // Constructor
-Channel::Channel(const std::string &name) 
-	: channelName(name), inviteOnly(false), topicRestricted(false), userLimit(0) {}
+Channel::Channel(const std::string &name)
+	: channelName(name), userLimit(0), inviteOnly(false), topicRestricted(false) {}
 
 // Client Management
 bool Channel::isClientInChannel(int clientFd) const
@@ -99,5 +100,22 @@ void Channel::setUserLimit(int limit)
 
 bool Channel::isUserLimitExceeded() const
 {
-	return userLimit > 0 && clients.size() >= userLimit;
+	// return userLimit > 0 && clients.size() >= userLimit;
+	return userLimit > 0 && static_cast<int>(clients.size()) >= userLimit;
+}
+
+std::string Channel::getName() const
+{
+	return channelName;
+}
+
+Channel* Server::findChannelByName(const std::string& channelName)
+{
+	for (Channel* channel : channels)
+	{  // Assuming 'channels' is a member of Server that holds all channels
+		if (channel->getName() == channelName)
+			return channel;		// Assuming Channel has a getName() method
+
+	}
+	return NULL;  // If the channel was not found, return nullptr
 }
