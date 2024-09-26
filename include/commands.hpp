@@ -11,6 +11,7 @@
 // 	// handleCommandPass();
 // };
 
+class Server;
 class Channel
 {
 private:
@@ -32,6 +33,8 @@ public:
 	void addClient(int clientFd);
 	void removeClient(int clientFd);
 	std::string getName() const;
+	const std::set<int>& getClients() const;
+	std::string getUsersList(const Server& server) const;
 
 	// Operator Management
 	bool isOperator(int clientFd) const;
@@ -59,5 +62,3 @@ public:
 };
 
 #endif
-
-

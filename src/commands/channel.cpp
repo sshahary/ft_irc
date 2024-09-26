@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/23 09:59:12 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/26 08:38:33 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,4 +118,39 @@ Channel* Server::findChannelByName(const std::string& channelName)
 
 	}
 	return NULL;  // If the channel was not found, return nullptr
+}
+
+const std::set<int>& Channel::getClients() const
+{
+	return clients;
+}
+
+void Server::broadcastToChannel(Channel* channel, const std::string& message, int excludeFd)
+{
+	for (int clientFd : channel->getClients()) {
+		if (clientFd != excludeFd) {
+			sendToClient(clientFd, message);
+		}
+	}
+}
+
+void Server::sendToClient(int clientFd, const std::string& message)
+{
+	send(clientFd, message.c_str(), message.length(), 0);
+}
+
+std::string Server::getClientNickname(int clientFd) const
+{
+	for (const auto& pair : nicknames)
+	{
+		if (pair.second == clientFd)
+			return pair.first;  // Return the nickname (the key)
+
+	}
+	return "Unknown";
+}
+
+std::string Server::getChannelUsers(Channel* channel) const
+{
+	return channel->getUsersList(*this);  // Call getUsersList from Channel
 }

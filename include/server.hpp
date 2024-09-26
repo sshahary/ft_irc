@@ -92,9 +92,12 @@ class Server
 		void	handleUserCommand(int clientFd, const std::vector<std::string>& params);
 
 		//other COmmands
-		void	handleJoinCommand(int clientFd, const std::vector<std::string>& params);
-
+		void		handleJoinCommand(int clientFd, const std::vector<std::string>& params);
+		std::string	getChannelUsers(Channel* channel) const;
 		Channel*	findChannelByName(const std::string& channelName);
+		void		broadcastToChannel(Channel* channel, const std::string& message, int excludeFd);
+		std::string	getClientNickname(int clientFd) const;
+		void		sendToClient(int clientFd, const std::string& message);
 
 	private:
 
@@ -119,6 +122,7 @@ class Server
 		std::string	serverPassword;				// Password for the server
 		int			serverFd;					// Server socket file descriptor
 		bool		isRunning;					// Flag to control server loop
+		std::string	serverName;
 
 		std::vector<Client>				clients;	// List of connected clients
 		std::vector<struct pollfd>		pollFds;	// Polling structures for clients

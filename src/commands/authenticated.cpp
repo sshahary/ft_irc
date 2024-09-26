@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:54:11 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/23 09:54:12 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/26 08:19:18 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,3 +77,4 @@ void Client::setRealName(const std::string &realName)
 {
 	this->realName = realName;
 }
+

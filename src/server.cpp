@@ -103,7 +103,10 @@ void Server::receiveData(int clientFd)
 		 // Find the client and check if they are authenticated
 		Client* client = findClientByFd(clientFd);
 		if (client == NULL)
+		{
+			std::cout << "Client not found: " << clientFd << std::endl;
 			return;
+		}
 		std::string command;
 		std::vector<std::string> params;
 		std::istringstream iss(buffer);
