@@ -126,6 +126,8 @@ void Server::receiveData(int clientFd)
 			handleUserCommand(clientFd, params);
 		else if (command == "JOIN")
 			handleJoinCommand(clientFd, params);
+		else if (command == "KICK")
+			handleKickCommand(clientFd, params);
 		// else if (command == "PART")
 		// 	handlePartCommand(clientFd, params);
 		// else if (command == "PRIVMSG")

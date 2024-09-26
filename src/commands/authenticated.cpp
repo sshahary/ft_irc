@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:54:11 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/26 08:19:18 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/26 13:13:54 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,18 +34,27 @@ void Client::setRegistered(bool status)
 }
 
 
+// Client* Server::findClientByFd(int clientFd)
+// {
+// 	// Iterate through the list of connected clients
+// 	for (size_t i = 0; i < clients.size(); ++i)
+// 	{
+// 		// Check if the client's file descriptor matches
+// 		if (clients[i].getFd() == clientFd)
+// 		{
+// 			return &clients[i];  // Return a pointer to the client
+// 		}
+// 	}
+// 	return NULL;  // If no client matches, return NULL
+// }
 Client* Server::findClientByFd(int clientFd)
 {
-	// Iterate through the list of connected clients
-	for (size_t i = 0; i < clients.size(); ++i)
+	for (Client& client : clients)
 	{
-		// Check if the client's file descriptor matches
-		if (clients[i].getFd() == clientFd)
-		{
-			return &clients[i];  // Return a pointer to the client
-		}
+		if (client.getFd() == clientFd)
+			return &client; // Return pointer to the found client
 	}
-	return NULL;  // If no client matches, return NULL
+	return NULL; // Return nullptr if not found
 }
 
 bool Client::hasNickSet() const

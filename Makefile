@@ -28,7 +28,8 @@ SRCS				:=	main.cpp \
 						$(CMD_SRC_DIR)commands.cpp \
 						$(CMD_SRC_DIR)authenticated.cpp \
 						$(CMD_SRC_DIR)channel.cpp \
-						$(CMD_SRC_DIR)othercommands.cpp \
+						$(CMD_SRC_DIR)join.cpp \
+						$(CMD_SRC_DIR)kick.cpp \
 
 
 OBJ_DIR				:= ./obj/

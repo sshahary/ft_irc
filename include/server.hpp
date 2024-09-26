@@ -91,14 +91,17 @@ class Server
 		void	handleNickCommand(int clientFd, const std::vector<std::string>& params);
 		void	handleUserCommand(int clientFd, const std::vector<std::string>& params);
 
-		//other COmmands
 		void		handleJoinCommand(int clientFd, const std::vector<std::string>& params);
+		void		handleKickCommand(int clientFd, const std::vector<std::string>& params);
+		//Utility Methods
 		std::string	getChannelUsers(Channel* channel) const;
 		Channel*	findChannelByName(const std::string& channelName);
 		void		broadcastToChannel(Channel* channel, const std::string& message, int excludeFd);
 		std::string	getClientNickname(int clientFd) const;
 		void		sendToClient(int clientFd, const std::string& message);
+		void		sendToChannel(const std::string& channelName, const std::string& message, int excludeFd);
 
+		Client*		findClientByNickname(const std::string &nickname);
 	private:
 
 		void	createSocket();					// Create and bind server socket
@@ -115,7 +118,6 @@ class Server
 		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
 
 		Client*		findClientByFd(int clientFd);	// Find client by file descriptor
-		Client*		findClientByNickname(const std::string &nickname);
 
 
 		int			serverPort;					// Port on which the server is running

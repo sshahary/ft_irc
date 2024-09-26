@@ -35,6 +35,7 @@ public:
 	std::string getName() const;
 	const std::set<int>& getClients() const;
 	std::string getUsersList(const Server& server) const;
+	bool hasClient(int clientFd) const;
 
 	// Operator Management
 	bool isOperator(int clientFd) const;

@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/26 08:38:33 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/26 09:11:32 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,4 +153,9 @@ std::string Server::getClientNickname(int clientFd) const
 std::string Server::getChannelUsers(Channel* channel) const
 {
 	return channel->getUsersList(*this);  // Call getUsersList from Channel
+}
+
+bool Channel::hasClient(int clientFd) const
+{
+	return clients.find(clientFd) != clients.end();
 }
