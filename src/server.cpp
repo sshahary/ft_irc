@@ -1,32 +1,31 @@
 
 #include "Server.hpp"
 
-// ============ Client - orthodox canonical form ==============================
-
-Client::Client() : clientFd(-1) {}
-
-// Client class implementation ================================================
-
-int Client::getFd() const { return clientFd; }
-
-void Client::setFd(int fd) { clientFd = fd; }
-
-std::string Client::getIpAddress() const { return ipAddress; }
-
-void Client::setIpAddress(const std::string &ip) { ipAddress = ip; }
-
 // ============ Server - orthodox canonical form ==============================
 
-// Server::Server(int port) : serverPort(port), serverFd(-1), isRunning(true) {}
-Server::Server(int port, const std::string &password) : serverPort(port), 
-														serverPassword(password), 
-														serverFd(-1), 
-														isRunning(true)
+Server::Server(const Config& config) :	config(config), serverSocket(-1),
+										isRunning(false)
 {
-	std::cout << "Server created with port: " << serverPort << " and password: " << serverPassword << std::endl;
+	std::cout << "Server created with port: " << config.getPort() << " and password: " << config.getPassword() << std::endl;
 }
 
-Server::~Server() {stop();}
+Server::~Server()
+{
+	stop();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Server class implementation ================================================
 

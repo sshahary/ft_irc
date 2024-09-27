@@ -4,18 +4,17 @@
 
 # include "Common.hpp"
 # include "Client.hpp"
+# include "Config.hpp"
 
-// Server class to manage server operations
 class Server
 {
 	public:
 
-		// // ============ orthodox canonical form ============================
-		Server(int port, const std::string &password);
+		Server(const Config& config);
 		~Server();
 
-		void	start();						// Start the server
-		void	stop();							// Stop the server
+		void	start();
+		void	stop();
 
 	private:
 
@@ -26,13 +25,14 @@ class Server
 		void	closeAllConnections();			// Close all open file descriptors
 		void	removeClient(int clientFd);		// Remove client from the list
 
-		int			serverPort;					// Port on which the server is running
-		std::string	serverPassword;				// Password for the server
-		int			serverFd;					// Server socket file descriptor
-		bool		isRunning;					// Flag to control server loop
-
-		std::vector<Client>				clients;	// List of connected clients
-		std::vector<struct pollfd>		pollFds;	// Polling structures for clients
+		Config							config;
+		int								serverSocket;			// Server socket file descriptor
+		std::vector<struct pollfd>		pollFds;				// Polling structures for clients
+		std::map<int, Client>			clients;				// List of connected clients
+		bool							isRunning;				// Flag to control server loop
+		
+		// int			serverPort;					// Port on which the server is running
+		// std::string	serverPassword;				// Password for the server
 };
 
 #endif
