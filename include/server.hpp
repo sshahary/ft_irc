@@ -2,48 +2,8 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <iostream>
-
-# include <vector>
-# include <string>
-# include <poll.h>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <stdexcept>
-
-# include <arpa/inet.h>
-# include <fcntl.h>
-# include <unistd.h>
-# include <cstring>
-
-// Color constants for output
-# define RED "\033[1;31m"
-# define WHI "\033[0;37m"
-# define GRE "\033[1;32m"
-# define YEL "\033[1;33m"
-
-// Client class to handle individual client connections
-class Client
-{
-	public:
-
-		// // ============ orthodox canonical form ============================
-		Client();
-		
-
-		// // ============ getters ============================================
-		int			getFd() const;
-		std::string	getIpAddress() const;
-
-		// // ============ setters ============================================
-		void		setFd(int fd);
-		void		setIpAddress(const std::string &ipAddress);
-
-	private:
-
-		int				clientFd;				// Client file descriptor
-		std::string		ipAddress;				// Client IP address
-};
+# include "Common.hpp"
+# include "Client.hpp"
 
 // Server class to manage server operations
 class Server
