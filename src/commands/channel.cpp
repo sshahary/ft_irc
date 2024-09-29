@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/26 09:11:32 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/29 15:04:24 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 // Constructor
 Channel::Channel(const std::string &name)
-	: channelName(name), userLimit(0), inviteOnly(false), topicRestricted(false) {}
+	: channelName(name), userLimit(0), inviteOnly(false), topicRestricted(false), clients() {}
 
 // Client Management
 bool Channel::isClientInChannel(int clientFd) const
