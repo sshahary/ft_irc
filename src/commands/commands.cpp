@@ -6,18 +6,19 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/29 15:18:28 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/29 16:14:02 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/server.hpp"
+#include "../../include/constants.hpp"
 
 
 void Server::handlePassCommand(int clientFd, const std::vector<std::string>& params)
 {
 	if (params.size() < 1)
 	{
-		sendError(clientFd, "ERR_NEEDMOREPARAMS", "PASS :No password provided");
+		sendError(clientFd, ERR_NEEDMOREPARAMS, "PASS :No password provided");
 		return;
 	}
 	Client* client = findClientByFd(clientFd);
@@ -27,7 +28,7 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 	// Check if the client is already authenticated
 	if (client->isAuthenticated())
 	{
-		sendError(clientFd, "ERR_ALREADYREGISTRED", "PASS :You are already authenticated");
+		sendError(clientFd, ERR_ALREADYREGISTERED, "PASS :You are already authenticated");
 		return;
 	}
 
@@ -41,49 +42,10 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 	}
 	else
 	{
-		sendError(clientFd, "ERR_PASSWDMISMATCH", "PASS :Incorrect password");
+		sendError(clientFd, ERR_PASSWDMISMATCH, "PASS :Incorrect password");
 		std::cerr << "Invalid password" << std::endl;
 	}
 }
-
-// void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
-// {
-// 	if (params.size() < 1)
-// 	{
-// 		sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
-// 		return;
-// 	}
-// 	Client* client = findClientByFd(clientFd);
-// 	if (client == NULL)
-// 		return;
-
-// 	std::string newNickname = params[0];
-
-// 	// Check if the nickname is already in use
-// 	if (isNicknameTaken(newNickname))
-// 	{
-// 		sendError(clientFd, "ERR_NICKNAMEINUSE", newNickname + " :Nickname is already in use");
-// 		return;
-// 	}
-
-// 	// Update the client's nickname and the nickname tracking
-// 	std::string oldNickname = client->getNickname();
-// 	client->setNickname(newNickname);
-// 	client->setNickSet(true);
-// 	updateNicknameTracking(oldNickname, newNickname, clientFd);
-
-// 	std::cout << "Client " << clientFd << " set nickname to '" << newNickname << "'" << std::endl;
-
-// 	// Don't mark the client as fully registered yet; wait for the USER command
-// 	if (client->isAuthenticated())
-// 	{
-// 		std::cout << "Client has provided NICK, waiting for USER to fully register." << std::endl;
-// 	}
-// 	else
-// 	{
-// 		sendError(clientFd, "ERR_NOTAUTHENTICATED", "Please authenticate using the PASS command before proceeding.");
-// 		std::cout << "Client provided NICK, but is not yet authenticated (waiting for PASS and USER)." << std::endl;
-// 	}
 
 void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
 {
@@ -103,7 +65,7 @@ void Server::handleNickCommand(int clientFd, const std::vector<std::string>& par
 	// Check if enough parameters are provided
 	if (params.size() < 1)
 	{
-		sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
+		sendError(clientFd, ERR_NEEDMOREPARAMS, "NICK :Not enough parameters");
 		return;
 	}
 
@@ -112,7 +74,7 @@ void Server::handleNickCommand(int clientFd, const std::vector<std::string>& par
 	// Check if the nickname is already in use
 	if (isNicknameTaken(newNickname))
 	{
-		sendError(clientFd, "ERR_NICKNAMEINUSE", newNickname + " :Nickname is already in use");
+		sendError(clientFd, ERR_NICKNAMEINUSE, newNickname + " :Nickname is already in use");
 		return;
 	}
 
@@ -159,19 +121,19 @@ void Server::handleUserCommand(int clientFd, const std::vector<std::string>& par
 
 	if (client->isRegistered())
 	{
-		sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
+		sendError(clientFd, ERR_ALREADYREGISTERED, ":You may not reregister");
 		return;
 	}
 
 	if (params.size() < 4)
 	{
-		sendError(clientFd, "ERR_NEEDMOREPARAMS", ":Not enough parameters");
+		sendError(clientFd, ERR_NEEDMOREPARAMS, ":Not enough parameters");
 		return;
 	}
 
 	if (!client->hasNickSet())
 	{
-		sendError(clientFd, "ERR_NONICKNAMEGIVEN", ":Nickname must be provided before USER");
+		sendError(clientFd, ERR_NONICKNAMEGIVEN, ":Nickname must be provided before USER");
 		return;
 	}
 

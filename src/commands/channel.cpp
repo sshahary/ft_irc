@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/29 15:04:24 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/29 15:37:21 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ Channel::Channel(const std::string &name)
 // Client Management
 bool Channel::isClientInChannel(int clientFd) const
 {
-	return clients.find(clientFd) != clients.end();
+	return std::find(clients.begin(), clients.end(), clientFd) != clients.end();
 }
 
 void Channel::addClient(int clientFd)
@@ -100,7 +100,6 @@ void Channel::setUserLimit(int limit)
 
 bool Channel::isUserLimitExceeded() const
 {
-	// return userLimit > 0 && clients.size() >= userLimit;
 	return userLimit > 0 && static_cast<int>(clients.size()) >= userLimit;
 }
 
