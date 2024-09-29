@@ -115,8 +115,12 @@ class Server
 		bool	isNicknameTaken(const std::string& nickname) const;  // Check if nickname is taken
 		void	updateNicknameTracking(const std::string& oldNickname, const std::string& newNickname, int clientFd);
 		void	removeNicknameTracking(const std::string& nickname);
-		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
+		//Messages
 
+		void	sendError(int clientFd, const std::string& errorCode, const std::string& message);
+		void sendMessage(int clientFd, const std::string& command, const std::string& message, const std::string& prefix);
+		void	sendWelcomeMessage(int clientFd, const std::string& nickname);
+		void	sendSuccessMessage(int clientFd, const std::string& message);
 		Client*		findClientByFd(int clientFd);	// Find client by file descriptor
 
 

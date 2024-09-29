@@ -3,7 +3,7 @@
 
 // ============ Client - orthodox canonical form ==============================
 
-Client::Client() : clientFd(-1), ipAddress(""), nickname("") {}
+Client::Client() : clientFd(-1), ipAddress(""), nickname(""), authenticated(0), registered(0) {}
 
 Client::Client(int fd, const std::string &ipAddress)			//sshahary
 	: clientFd(fd), ipAddress(ipAddress), nickname("") {}
@@ -82,67 +82,111 @@ void Server::removeClient(int clientFd)
 	close(clientFd);
 }
 
-// Receive data from a connected client
+
 void Server::receiveData(int clientFd)
 {
-	char	buffer[1024];
-
+	char buffer[1024];
 	memset(buffer, 0, sizeof(buffer));
+
 	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 	if (bytesReceived <= 0)
 	{
-		std::cout << RED << "Client disconnected: " << clientFd << WHI << std::endl;
+		std::cout << "Client disconnected: " << clientFd << std::endl;
 		removeClient(clientFd);
-		close(clientFd);
+		return;
 	}
-	else
+
+	buffer[bytesReceived] = '\0';
+	std::cout << "Client <" << clientFd << "> sent: " << buffer << std::endl;
+
+	Client* client = findClientByFd(clientFd);
+	if (client == nullptr)
 	{
-		buffer[bytesReceived] = '\0';
-		std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
-		// process received data
-		 // Find the client and check if they are authenticated
-		Client* client = findClientByFd(clientFd);
-		if (client == NULL)
-		{
-			std::cout << "Client not found: " << clientFd << std::endl;
-			return;
-		}
-		std::string command;
-		std::vector<std::string> params;
-		std::istringstream iss(buffer);
-		iss >> command;
-
-		std::string param;
-		while (iss >> param)
-			params.push_back(param);
-
-		// Handle commands
-		 // Handle the parsed command
-		if (command == "PASS")
-			handlePassCommand(clientFd, params);
-		else if (command == "NICK")
-			handleNickCommand(clientFd, params);
-		else if (command == "USER")
-			handleUserCommand(clientFd, params);
-		else if (command == "JOIN")
-			handleJoinCommand(clientFd, params);
-		else if (command == "KICK")
-			handleKickCommand(clientFd, params);
-		// else if (command == "PART")
-		// 	handlePartCommand(clientFd, params);
-		// else if (command == "PRIVMSG")
-		// 	handlePrivmsgCommand(clientFd, params);
-		// else if (command == "QUIT")
-		// 	handleQuitCommand(clientFd, params);
-		// else
-		// 	sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
-		std::string response = "Command processed successfully"; // Placeholder response
-		if (send(clientFd, response.c_str(), response.length(), 0) == -1)
-		{
-			std::cout << "send() error: " << strerror(errno) << std::endl;
-		}
+		std::cout << "Client not found: " << clientFd << std::endl;
+		return;
 	}
+
+	std::string command;
+	std::vector<std::string> params;
+	std::istringstream iss(buffer);
+	iss >> command;
+
+	std::string param;
+	while (iss >> param)
+		params.push_back(param);
+
+	// Handle commands
+	if (command == "PASS")
+		handlePassCommand(clientFd, params);
+	else if (command == "NICK")
+		handleNickCommand(clientFd, params);
+	else if (command == "USER")
+		handleUserCommand(clientFd, params);
+	else
+		sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
 }
+
+// Receive data from a connected client
+// void Server::receiveData(int clientFd)
+// {
+// 	char	buffer[1024];
+
+// 	memset(buffer, 0, sizeof(buffer));
+// 	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+// 	if (bytesReceived <= 0)
+// 	{
+// 		std::cout << RED << "Client disconnected: " << clientFd << WHI << std::endl;
+// 		removeClient(clientFd);
+// 		close(clientFd);
+// 	}
+// 	else
+// 	{
+// 		buffer[bytesReceived] = '\0';
+// 		std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
+// 		// process received data
+// 		 // Find the client and check if they are authenticated
+// 		Client* client = findClientByFd(clientFd);
+// 		if (client == NULL)
+// 		{
+// 			std::cout << "Client not found: " << clientFd << std::endl;
+// 			return;
+// 		}
+// 		std::string command;
+// 		std::vector<std::string> params;
+// 		std::istringstream iss(buffer);
+// 		iss >> command;
+
+// 		std::string param;
+// 		while (iss >> param)
+// 			params.push_back(param);
+
+// 		// Handle commands
+// 		 // Handle the parsed command
+// 		if (command == "PASS")
+// 			handlePassCommand(clientFd, params);
+// 		else if (command == "NICK")
+// 			handleNickCommand(clientFd, params);
+// 		else if (command == "USER")
+// 			handleUserCommand(clientFd, params);
+// 		// else if (command == "JOIN")
+// 		// 	handleJoinCommand(clientFd, params);
+// 		// else if (command == "KICK")
+// 		// 	handleKickCommand(clientFd, params);
+// 		// else if (command == "PART")
+// 		// 	handlePartCommand(clientFd, params);
+// 		// else if (command == "PRIVMSG")
+// 		// 	handlePrivmsgCommand(clientFd, params);
+// 		// else if (command == "QUIT")
+// 		// 	handleQuitCommand(clientFd, params);
+// 		// else
+// 		// 	sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
+// 		std::string response = "Command processed successfully"; // Placeholder response
+// 		if (send(clientFd, response.c_str(), response.length(), 0) == -1)
+// 		{
+// 			std::cout << "send() error: " << strerror(errno) << std::endl;
+// 		}
+// 	}
+// }
 
 
 // Accept a new client connection

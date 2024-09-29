@@ -26,6 +26,7 @@ CMD_SRC_DIR			:= commands/
 SRCS				:=	main.cpp \
 						server.cpp \
 						$(CMD_SRC_DIR)commands.cpp \
+						$(CMD_SRC_DIR)messages.cpp \
 						$(CMD_SRC_DIR)authenticated.cpp \
 						$(CMD_SRC_DIR)channel.cpp \
 						$(CMD_SRC_DIR)join.cpp \

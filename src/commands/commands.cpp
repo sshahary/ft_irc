@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/22 18:43:02 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/09/29 14:46:20 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,49 +17,45 @@ void Server::handlePassCommand(int clientFd, const std::vector<std::string>& par
 {
 	if (params.size() < 1)
 	{
-		std::cerr << RED << "No password provided" << WHI << std::endl;
-		return ;
+		sendError(clientFd, "ERR_NEEDMOREPARAMS", "PASS :No password provided");
+		return;
 	}
 	Client* client = findClientByFd(clientFd);
 	if (client == NULL)
 		return;
-	// if (client->isAuthenticated())
-	// {
-	// 	sendError(clientFd, "ERR_ALREADYREGISTRED", "PASS :You are already authenticated");
-	// 	return;
-	// }
+
+	// Check if the client is already authenticated
+	if (client->isAuthenticated())
+	{
+		sendError(clientFd, "ERR_ALREADYREGISTRED", "PASS :You are already authenticated");
+		return;
+	}
+
 	std::string providedPassword = params[0];
+
+	// Compare provided password with the server's password
 	if (providedPassword == serverPassword)
 	{
 		client->setAuthenticated(true);
-		std::cout << GRE << "Client authenticated successfully" << WHI << std::endl;
-		// Set client authenticated (not shown, but you would likely have a flag in Client)
+		std::cout << "Client authenticated successfully" << std::endl;
 	}
 	else
 	{
-		std::cerr << RED << "Invalid password" << WHI << std::endl;
-		// removeClient(clientFd);
 		sendError(clientFd, "ERR_PASSWDMISMATCH", "PASS :Incorrect password");
+		std::cerr << "Invalid password" << std::endl;
 	}
 }
 
-// Handle the NICK command
 void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
 {
 	if (params.size() < 1)
 	{
-        sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
-        return;
-    }
+		sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
+		return;
+	}
 	Client* client = findClientByFd(clientFd);
 	if (client == NULL)
 		return;
-
-	if (params.empty())
-	{
-		sendError(clientFd, "ERR_NONICKNAMEGIVEN", "No nickname given");
-		return;
-	}
 
 	std::string newNickname = params[0];
 
@@ -76,15 +72,60 @@ void Server::handleNickCommand(int clientFd, const std::vector<std::string>& par
 	client->setNickSet(true);
 	updateNicknameTracking(oldNickname, newNickname, clientFd);
 
-	// Log the change
-	std::cout << GRE << "Client " << clientFd << " set nickname to '" << newNickname << "'" << WHI << std::endl;
-	 // Check if USER is also set to mark the client as registered
-	if (client->isAuthenticated() && client->hasNickSet())
+	std::cout << "Client " << clientFd << " set nickname to '" << newNickname << "'" << std::endl;
+
+	// Don't mark the client as fully registered yet; wait for the USER command
+	if (client->isAuthenticated())
 	{
-		client->setRegistered(true);
-		std::cout << GRE << "Client " << clientFd << " is now fully registered" << WHI << std::endl;
+		std::cout << "Client has provided NICK, waiting for USER to fully register." << std::endl;
+	}
+	else
+	{
+		std::cout << "Client provided NICK, but is not yet authenticated (waiting for PASS and USER)." << std::endl;
 	}
 }
+
+// Handle the NICK command
+// void Server::handleNickCommand(int clientFd, const std::vector<std::string>& params)
+// {
+// 	if (params.size() < 1)
+// 	{
+// 		sendError(clientFd, "ERR_NEEDMOREPARAMS", "NICK :Not enough parameters");
+// 		return;
+// 	}
+// 	Client* client = findClientByFd(clientFd);
+// 	if (client == NULL)
+// 		return;
+
+// 	if (params.empty())
+// 	{
+// 		sendError(clientFd, "ERR_NONICKNAMEGIVEN", "No nickname given");
+// 		return;
+// 	}
+
+// 	std::string newNickname = params[0];
+
+// 	// Check if the nickname is already in use
+// 	if (isNicknameTaken(newNickname))
+// 	{
+// 		sendError(clientFd, "ERR_NICKNAMEINUSE", newNickname + " :Nickname is already in use");
+// 		return;
+// 	}
+
+// 	// Update the client's nickname and the nickname tracking
+// 	std::string oldNickname = client->getNickname();
+// 	client->setNickname(newNickname);
+// 	client->setNickSet(true);
+// 	updateNicknameTracking(oldNickname, newNickname, clientFd);
+
+// 	 // Check if USER is also set to mark the client as registered
+// 	if (client->isAuthenticated() && client->hasNickSet())
+// 	{
+// 		client->setRegistered(true);
+// 		sendMessage(clientFd, "001", "Welcome to the Internet Relay Network " + client->getNickname() + "!");
+// 		std::cout << "Client " << clientFd << " is now fully registered" << std::endl;
+// 	}
+// }
 
 // Check if a nickname is already taken
 bool Server::isNicknameTaken(const std::string& nickname) const
@@ -106,27 +147,55 @@ void Server::removeNicknameTracking(const std::string& nickname)
 	nicknames.erase(nickname);
 }
 
-// Send an error message to a client
-void Server::sendError(int clientFd, const std::string& errorCode, const std::string& message)
-{
-	std::string errorMessage = ":" + errorCode + " " + message + "\r\n";
-	send(clientFd, errorMessage.c_str(), errorMessage.length(), 0);
-}
+// USer command
+// void Server::handleUserCommand(int clientFd, const std::vector<std::string>& params)
+// {
+// 	Client* client = findClientByFd(clientFd);
+// 	if (client == NULL)
+// 		return;
 
+// 	if (client->isRegistered())
+// 	{
+// 		sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
+// 		return;
+// 	}
+// 	if (params.size() < 4)
+// 	{
+// 		sendError(clientFd, "ERR_NEEDMOREPARAMS", ":Not enough parameters");
+// 		return;
+// 	}
 
-//USer command
+// 	if (!client->hasNickSet())
+// 	{
+// 		sendError(clientFd, "ERR_NONICKNAMEGIVEN", ":Nickname must be provided before USER");
+// 		return;
+// 	}
+
+// 	std::string username = params[0];
+// 	std::string realname = params[3];
+// 	client->setUsername(username);
+// 	client->setRealName(realname);
+
+// 	// After setting both NICK and USER, mark the client as registered
+// 	if (client->isAuthenticated() && client->hasNickSet())
+// 	{
+// 		client->setRegistered(true);
+// 		sendMessage(clientFd, "001", "Welcome to the Internet Relay Network " + client->getNickname() + "!");
+// 		std::cout << "Client " << clientFd << " registered with username '" << username << "' and real name '" << realname << "'" << std::endl;
+// 	}
+// }
+
 void Server::handleUserCommand(int clientFd, const std::vector<std::string>& params)
 {
-	std::cout<<"clientfd: "<<clientFd<<"pars: "<<&params<<std::endl;
 	Client* client = findClientByFd(clientFd);
 	if (client == NULL)
 		return;
 
-	// if (client->isRegistered())
-	// {
-	// 	sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
-	// 	return;
-	// }
+	if (client->isRegistered())
+	{
+		sendError(clientFd, "ERR_ALREADYREGISTERED", ":You may not reregister");
+		return;
+	}
 
 	if (params.size() < 4)
 	{
@@ -140,10 +209,21 @@ void Server::handleUserCommand(int clientFd, const std::vector<std::string>& par
 		return;
 	}
 
-	client->setRegistered(true);
-
 	std::string username = params[0];
-	std::string realname = params[3]; // Real name prefixed with ':'
+	std::string realname = params[3];
+	client->setUsername(username);
+	client->setRealName(realname);
 
-	std::cout << GRE << "Client " << clientFd << " registered with username '" << username << "' and real name '" << realname << "'" << WHI << std::endl;
+	// After receiving both NICK and USER, mark the client as registered
+	if (client->isAuthenticated() && client->hasNickSet())
+	{
+		client->setRegistered(true);
+		std::string serverName = "irc.myserver.com";  // Use your actual server name or identifier
+		sendMessage(clientFd, "001", "Welcome to the Internet Relay Network " + client->getNickname() + "!", serverName);
+		std::cout << "Client " << clientFd << " registered with username '" << username << "' and real name '" << realname << "'" << std::endl;
+	}
+	else
+	{
+		std::cout << "Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS)." << std::endl;
+	}
 }
