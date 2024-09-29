@@ -1,6 +1,8 @@
 #include "Config.hpp"
 
-Config::Config(int port, const std::string& password) : port(port), password(password) {}
+Config::Config(int port, const std::string &password) : port(port), password(password) {}
+
+Config::~Config() {}
 
 int Config::getPort() const
 {

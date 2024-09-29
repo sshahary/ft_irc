@@ -6,7 +6,7 @@
 /*   By: musenov <musenov@student.42heilbronn.de    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/05 23:27:02 by musenov           #+#    #+#             */
-/*   Updated: 2024/09/27 22:41:23 by musenov          ###   ########.fr       */
+/*   Updated: 2024/09/29 19:37:10 by musenov          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,9 @@ Server* g_server = NULL;
 
 void signalHandler(int signum)
 {
-    if (g_server)
-        g_server->stop();
-    exit(signum);
+	if (g_server)
+		g_server->stop();
+	exit(signum);
 }
 
 int main(int argc, char **argv)
@@ -35,11 +35,11 @@ int main(int argc, char **argv)
 	try
 	{
 		Config config(std::atoi(argv[1]), argv[2]);
-        Server server(config);
-        g_server = &server;
+		Server server(config);
+		g_server = &server;
 
-        signal(SIGINT, signalHandler);
-        signal(SIGQUIT, signalHandler);
+		signal(SIGINT, signalHandler);
+		signal(SIGQUIT, signalHandler);
 
 		server.start();
 	}

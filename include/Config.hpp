@@ -6,7 +6,7 @@
 class Config
 {
 	public:
-		Config(int port, const std::string& password);
+		Config(int port, const std::string &password);
 		~Config();
 
 		int					getPort() const;
