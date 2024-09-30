@@ -1,4 +1,3 @@
-
 #include "Server.hpp"
 #include "Config.hpp"
 
@@ -7,7 +6,7 @@
 _____________________________________________________________________________*/
 
 Server::Server(const Config &config) :	config(config), serverSocket(-1),
-										isRunning(false)
+										isRunning(true)
 {
 	std::cout << "Server created with port: " << config.getPort() << " and password: " << config.getPassword() << std::endl;
 }
@@ -24,7 +23,38 @@ _____________________________________________________________________________*/
 void Server::start()
 {
 	createSocket();
-	waitForConnections();
+	// waitForConnections();
+	// isRunning = true;
+	while (isRunning)
+	{
+		int pollStatus = poll(&pollFds[0], pollFds.size(), -1);
+		if (pollStatus == -1)
+		{
+			if (errno == EINTR)
+			{
+				// The call was interrupted by a signal
+				// Just break out of the loop and proceed with shutdown
+				break;
+			}
+			else
+			{
+				// Some other error occurred, throw an exception
+				throw std::runtime_error("Polling error");
+			}
+		}
+
+		for (size_t i = 0; i < pollFds.size(); ++i)
+		{
+			if (pollFds[i].revents & POLLIN)
+			{
+				if (pollFds[i].fd == serverSocket)
+					acceptNewClient();
+				else
+					receiveData(pollFds[i].fd);
+			}
+		}
+	}
+	// closeAllConnections();
 }
 
 // Create and bind server socket
@@ -62,8 +92,9 @@ void Server::createSocket()
 }
 
 // Main server loop to wait for and handle connections
-void Server::waitForConnections()
+/* void Server::waitForConnections()
 {
+	// isRunning = true;
 	while (isRunning)
 	{
 		int pollStatus = poll(&pollFds[0], pollFds.size(), -1);
@@ -81,7 +112,8 @@ void Server::waitForConnections()
 			}
 		}
 	}
-}
+	closeAllConnections();
+} */
 
 // Accept a new client connection
 void Server::acceptNewClient()
@@ -161,10 +193,23 @@ void Server::removeClient(int clientFd)
 
 void Server::stop()
 {
+	isRunning = false;
 	closeAllConnections();
+/* 	for (size_t i = 0; i < clients.size(); ++i)
+	{
+		std::cout << RED << "Closing connection with client: " << clients[i].getFd() << WHI << std::endl;
+		close(clients[i].getFd());
+	}
+	if (serverSocket != -1)
+	{
+		std::cout << RED << "Shutting down server: " << serverSocket << WHI << std::endl;
+		close(serverSocket);
+		std::cout << isRunning << std::endl;
+	} */
 }
 
 // Method to close all client connections and the server socket fd
+
 void Server::closeAllConnections()
 {
 	for (size_t i = 0; i < clients.size(); ++i)
@@ -176,5 +221,6 @@ void Server::closeAllConnections()
 	{
 		std::cout << RED << "Shutting down server: " << serverSocket << WHI << std::endl;
 		close(serverSocket);
+		std::cout << isRunning << std::endl;
 	}
 }
