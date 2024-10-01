@@ -6,7 +6,7 @@
 /*   By: musenov <musenov@student.42heilbronn.de    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/05 23:27:02 by musenov           #+#    #+#             */
-/*   Updated: 2024/10/01 20:57:20 by musenov          ###   ########.fr       */
+/*   Updated: 2024/10/01 22:52:27 by musenov          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ int main(int argc, char **argv)
 
 		g_server = NULL;
 	}
+	// to catch not only IrcExceptions but also all possible ones
 	catch (const std::exception &e)
 	{
 		Logger::error(e.what());
@@ -54,3 +55,39 @@ int main(int argc, char **argv)
 	Logger::info("Server has shut down");
 	return EXIT_SUCCESS;
 }
+
+/* 
+try
+	{
+		Bureaucrat a("Cipolino", 0); // This should throw GradeTooHighException
+		std::cout << a << std::endl;
+	}
+	catch (const Bureaucrat::GradeTooHighException &e_high)
+	{
+		std::cout << e_high.what() << std::endl;
+	}
+	catch (const Bureaucrat::GradeTooLowException &e_low)
+	{
+		std::cout << e_low.what() << std::endl;
+	}
+
+
+void	Bureaucrat::increment_grade()
+{
+	if (grade_ - 1 <= 0)
+		throw Bureaucrat::GradeTooHighException();
+	grade_--;
+}
+
+		class GradeTooHighException : public std::exception
+		{
+			public:
+				const char* what() const throw()
+				{
+					return "Grade too high";
+				}
+		};
+
+		
+ */
+

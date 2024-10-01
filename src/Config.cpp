@@ -1,8 +1,19 @@
+
 #include "Config.hpp"
 
-Config::Config(int port, const std::string &password) : port(port), password(password) {}
+/*_____________________________________________________________________________
+								ORTHODOX CANONICAL FORM
+_____________________________________________________________________________*/
+
+Config::Config(int port, const std::string &password) :	port(port), 
+														password(password) {}
 
 Config::~Config() {}
+
+/*_____________________________________________________________________________
+								CORE FUNCTIONS
+_____________________________________________________________________________*/
+
 
 int Config::getPort() const
 {

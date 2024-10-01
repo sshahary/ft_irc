@@ -18,11 +18,10 @@ class Server
 
 	private:
 
-		void	closeAllConnections();			// Close all open file descriptors
 		void	createSocket();					// Create and bind server socket
-		void	waitForConnections();			// Main server loop to handle clients
 		void	acceptNewClient();				// Accept new client connection
 		void	receiveData(int clientFd);		// Receive data from a client
+		void	closeAllConnections();			// Close all open file descriptors
 		void	removeClient(int clientFd);		// Remove client from the list
 
 		Config							config;

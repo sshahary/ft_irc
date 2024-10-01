@@ -9,15 +9,12 @@ class Client
 {
 	public:
 
-		// // ============ orthodox canonical form ============================
 		Client();
+		~Client();
 		
-
-		// // ============ getters ============================================
 		int			getFd() const;
 		std::string	getIpAddress() const;
 
-		// // ============ setters ============================================
 		void		setFd(int fd);
 		void		setIpAddress(const std::string &ipAddress);
 
