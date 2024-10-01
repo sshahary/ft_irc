@@ -54,7 +54,7 @@ void Server::start()
 			}
 		}
 	}
-	// closeAllConnections();
+	closeAllConnections();
 }
 
 // Create and bind server socket
@@ -194,7 +194,7 @@ void Server::removeClient(int clientFd)
 void Server::stop()
 {
 	isRunning = false;
-	closeAllConnections();
+	// closeAllConnections();
 /* 	for (size_t i = 0; i < clients.size(); ++i)
 	{
 		std::cout << RED << "Closing connection with client: " << clients[i].getFd() << WHI << std::endl;
