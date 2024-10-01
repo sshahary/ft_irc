@@ -1,15 +1,26 @@
 #include "Logger.hpp"
 #include <iostream>
 #include <sstream>
+#include "Common.hpp"
 
 void Logger::info(const std::string &message)
 {
-	std::cout << "[INFO] " << message << std::endl;
+	std::cout << BLU << "[INFO] " << message << WHI << std::endl;
 }
 
 void Logger::error(const std::string &message)
 {
-	std::cerr << "[ERROR] " << message << std::endl;
+	std::cerr << RED << "[ERROR] " << message << WHI << std::endl;
+}
+
+void Logger::chat(const std::string &message)
+{
+	std::cout << YEL << "[CHAT] " << message << WHI << std::endl;
+}
+
+void Logger::connection(const std::string &message)
+{
+	std::cout << GRE << "[CONNECTION] " << message << WHI << std::endl;
 }
 
 std::string Logger::intToString(int value)
