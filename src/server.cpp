@@ -7,9 +7,9 @@
 								ORTHODOX CANONICAL FORM
 _____________________________________________________________________________*/
 
-Server::Server(const Config &config) :	config(config), 
-										serverSocket(-1),
-										isRunning(true)
+Server::Server(const Config &config) :	serverSocket(-1),
+										isRunning(true),
+										config(config)
 {
 	Logger::info( "Server created with port: " + \
 				Logger::intToString(config.getPort()) + \
@@ -18,7 +18,7 @@ Server::Server(const Config &config) :	config(config),
 
 Server::~Server()
 {
-	stop();
+	// stop();
 }
 
 /*_____________________________________________________________________________
@@ -28,6 +28,19 @@ _____________________________________________________________________________*/
 void Server::stop()
 {
 	isRunning = false;
+	// closeAllConnections();
+	for (size_t i = 0; i < clients.size(); ++i)
+	{
+		Logger::connection("Closing connection with client: " + \
+		Logger::intToString(clients[i].getFd()));
+		close(clients[i].getFd());
+	}
+	if (serverSocket != -1)
+	{
+		Logger::info("Shutting down the server: " + \
+		Logger::intToString(serverSocket));
+		close(serverSocket);
+	}
 }
 
 void Server::start()
@@ -50,11 +63,11 @@ void Server::start()
 				if (pollFds[i].fd == serverSocket)
 					acceptNewClient();
 				else
-					receiveData(pollFds[i].fd);
+					processClientData(pollFds[i].fd);
 			}
 		}
 	}
-	closeAllConnections();
+	// closeAllConnections();
 }
 
 // Create and bind server socket
@@ -124,7 +137,7 @@ void Server::acceptNewClient()
 }
 
 // Receive data from a connected client
-void Server::receiveData(int clientFd)
+void Server::processClientData(int clientFd)
 {
 	char	buffer[1024];
 
@@ -164,7 +177,7 @@ void Server::removeClient(int clientFd)
 	}
 }
 
-// Method to close all client connections and the server socket fd
+/* // Method to close all client connections and the server socket fd
 void Server::closeAllConnections()
 {
 	for (size_t i = 0; i < clients.size(); ++i)
@@ -179,4 +192,4 @@ void Server::closeAllConnections()
 		Logger::intToString(serverSocket));
 		close(serverSocket);
 	}
-}
+} */
