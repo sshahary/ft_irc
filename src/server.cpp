@@ -25,7 +25,7 @@ Server::~Server()
 								CORE FUNCTIONS
 _____________________________________________________________________________*/
 
-void Server::stop()
+/* void Server::stop()
 {
 	isRunning = false;
 	// closeAllConnections();
@@ -41,7 +41,30 @@ void Server::stop()
 		Logger::intToString(serverSocket));
 		close(serverSocket);
 	}
+} */
+
+void Server::stop()
+{
+	isRunning = false;
+	
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		int clientFd = it->first; // Key (file descriptor) of the map entry
+		Logger::connection("Closing connection with client: " + \
+		Logger::intToString(clientFd));
+		close(clientFd); // Close the client socket
+	}
+	if (serverSocket != -1)
+	{
+		Logger::info("Shutting down the server: " + \
+		Logger::intToString(serverSocket));
+		close(serverSocket); // Close the server socket
+	}
 }
+
+
+
+
 
 void Server::start()
 {
@@ -105,7 +128,7 @@ void Server::createSocket()
 }
 
 // Accept a new client connection
-void Server::acceptNewClient()
+/* void Server::acceptNewClient()
 {
 	Client				newClient;
 	struct sockaddr_in	clientAddress;
@@ -134,6 +157,30 @@ void Server::acceptNewClient()
 	pollFds.push_back(clientPollFd);
 
 	Logger::connection("Client connected: " + newClient.getIpAddress());
+} */
+
+void Server::acceptNewClient()
+{
+	struct sockaddr_in clientAddr;
+	pollfd clientPollFd;
+
+	socklen_t clientLen = sizeof(clientAddr);
+	int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+	if (clientSocket < 0) {
+		Logger::error("Failed to accept client connection");
+		return;
+	}
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) == -1)
+	{
+		Logger::error("Failed to set non-blocking mode for client");
+		close(clientSocket);
+		return ;
+	}
+	clientPollFd.fd = clientSocket;
+	clientPollFd.events = POLLIN;
+	pollFds.push_back(clientPollFd);
+	clients[clientSocket] = Client(clientSocket);
+	Logger::info("New client connected: " + std::to_string(clientSocket));
 }
 
 // Receive data from a connected client
@@ -167,13 +214,19 @@ void Server::removeClient(int clientFd)
 			break;
 		}
 	}
-	for (size_t i = 0; i < clients.size(); ++i)
+/* 	for (size_t i = 0; i < clients.size(); ++i)
 	{
 		if (clients[i].getFd() == clientFd)
 		{
 			clients.erase(clients.begin() + i);
 			break;
 		}
+	} */
+	// Remove client from the std::map<int, Client>
+	std::map<int, Client>::iterator it = clients.find(clientFd);
+	if (it != clients.end()) 
+	{
+		clients.erase(it); // Erase the client using the iterator
 	}
 }
 

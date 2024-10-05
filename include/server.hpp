@@ -6,6 +6,7 @@
 # include "Client.hpp"
 # include "Config.hpp"
 
+
 class Server
 {
 	public:
@@ -15,6 +16,12 @@ class Server
 
 		void	start();
 		void	stop();
+
+
+
+
+
+
 
 	private:
 
@@ -28,10 +35,12 @@ class Server
 		bool							isRunning;				// Flag to control server loop
 		Config							config;
 		std::vector<struct pollfd>		pollFds;				// Polling structures for clients
-		std::vector<Client>				clients;				// List of connected clients
+		// std::vector<Client>				clients;				// List of connected clients
+		std::map<int, Client>			clients;
 		
 		// int			serverPort;					// Port on which the server is running
 		// std::string	serverPassword;				// Password for the server
+		
 };
 
 #endif

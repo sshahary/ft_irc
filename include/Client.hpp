@@ -10,10 +10,12 @@ class Client
 	public:
 
 		Client();
+		Client(int fd);
 		~Client();
 		
-		int			getFd() const;
-		std::string	getIpAddress() const;
+		int					getFd() const;
+		const std::string	getIpAddress() const;
+		const std::string&	getNickname() const;
 
 		void		setFd(int fd);
 		void		setIpAddress(const std::string &ipAddress);
@@ -22,6 +24,10 @@ class Client
 
 		int				clientFd;				// Client file descriptor
 		std::string		ipAddress;				// Client IP address
+		std::string		nickname;
+		std::string		username;
+		std::string		realName;
+		std::string		hostname;
 };
 
 #endif
