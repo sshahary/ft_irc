@@ -16,32 +16,11 @@ Server::Server(const Config &config) :	serverSocket(-1),
 				" and password: " + config.getPassword() );
 }
 
-Server::~Server()
-{
-	// stop();
-}
+Server::~Server() {}
 
 /*_____________________________________________________________________________
 								CORE FUNCTIONS
 _____________________________________________________________________________*/
-
-/* void Server::stop()
-{
-	isRunning = false;
-	// closeAllConnections();
-	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		Logger::connection("Closing connection with client: " + \
-		Logger::intToString(clients[i].getFd()));
-		close(clients[i].getFd());
-	}
-	if (serverSocket != -1)
-	{
-		Logger::info("Shutting down the server: " + \
-		Logger::intToString(serverSocket));
-		close(serverSocket);
-	}
-} */
 
 void Server::stop()
 {
@@ -61,10 +40,6 @@ void Server::stop()
 		close(serverSocket); // Close the server socket
 	}
 }
-
-
-
-
 
 void Server::start()
 {
@@ -90,7 +65,6 @@ void Server::start()
 			}
 		}
 	}
-	// closeAllConnections();
 }
 
 // Create and bind server socket
@@ -126,38 +100,6 @@ void Server::createSocket()
 
 	Logger::connection("Server listening on port " + Logger::intToString(config.getPort()));
 }
-
-// Accept a new client connection
-/* void Server::acceptNewClient()
-{
-	Client				newClient;
-	struct sockaddr_in	clientAddress;
-	struct pollfd		clientPollFd;
-
-	socklen_t clientLen = sizeof(clientAddress);
-	int clientFd = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLen);
-	if (clientFd == -1)
-	{
-		Logger::error("Failed to accept client connection");
-		return ;
-	}
-	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
-	{
-		Logger::error("Failed to set non-blocking mode for client");
-		close(clientFd);
-		return ;
-	}
-
-	newClient.setFd(clientFd);
-	newClient.setIpAddress(inet_ntoa(clientAddress.sin_addr));
-	clients.push_back(newClient);
-
-	clientPollFd.fd = clientFd;
-	clientPollFd.events = POLLIN;
-	pollFds.push_back(clientPollFd);
-
-	Logger::connection("Client connected: " + newClient.getIpAddress());
-} */
 
 void Server::acceptNewClient()
 {
@@ -214,14 +156,6 @@ void Server::removeClient(int clientFd)
 			break;
 		}
 	}
-/* 	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		if (clients[i].getFd() == clientFd)
-		{
-			clients.erase(clients.begin() + i);
-			break;
-		}
-	} */
 	// Remove client from the std::map<int, Client>
 	std::map<int, Client>::iterator it = clients.find(clientFd);
 	if (it != clients.end()) 
@@ -230,19 +164,7 @@ void Server::removeClient(int clientFd)
 	}
 }
 
-/* // Method to close all client connections and the server socket fd
-void Server::closeAllConnections()
+const std::string& Server::getServerName() const
 {
-	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		Logger::connection("Closing connection with client: " + \
-		Logger::intToString(clients[i].getFd()));
-		close(clients[i].getFd());
-	}
-	if (serverSocket != -1)
-	{
-		Logger::info("Shutting down the server: " + \
-		Logger::intToString(serverSocket));
-		close(serverSocket);
-	}
-} */
+	return serverName;
+}
