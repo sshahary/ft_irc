@@ -21,6 +21,7 @@ IrcCommands::~IrcCommands() {}
 								CORE FUNCTIONS
 _____________________________________________________________________________*/
 
+
 void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& message)
 {
 	// Split the incoming message into command and parameters
@@ -39,6 +40,15 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 	int commandType = getCommandType(command);
 	switch (commandType)
 	{
+		case CMD_PASS:
+			handlePass(client, params);
+			break;
+		case CMD_NICK:
+			handleNick(client, params);
+			break;
+		case CMD_USER:
+			handleUser(client, params);
+			break;
 		case CMD_PING:
 			handlePing(client, params);
 			break;
@@ -98,11 +108,25 @@ void IrcCommands::sendToClient(const Client& client, const std::string& message)
 	send(client.getFd(), message.c_str(), message.length(), 0);
 }
 
+void IrcCommands::broadcastToAll(const std::string& message)
+{
+	std::map<int, Client> clients = server.get_clients();
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+		sendToClient(it->second, message);
+}
+
+void IrcCommands::welcomeClient(Client& client)
+{
+	sendToClient(client, ":" + server.getServerName() + " " + RPL_WELCOME + " " + client.getNickname() + " :Welcome to the Internet Relay Network " + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + CRLF);
+	sendToClient(client, ":" + server.getServerName() + " " + RPL_YOURHOST + " " + client.getNickname() + " :Your host is " + server.getServerName() + ", running version 1.0" + CRLF);
+	sendToClient(client, ":" + server.getServerName() + " " + RPL_CREATED + " " + client.getNickname() + " :This server was created " + CRLF);
+	sendToClient(client, ":" + server.getServerName() + " " + RPL_MYINFO + " " + client.getNickname() + " " + server.getServerName() + " 1.0 " + CRLF);
+}
+
 
 /*_____________________________________________________________________________
 								IRC COMMANDS
 _____________________________________________________________________________*/
-
 
 
 void IrcCommands::handlePing(Client& client, const std::vector<std::string>& params)
@@ -116,4 +140,61 @@ void IrcCommands::handlePing(Client& client, const std::vector<std::string>& par
 	std::string response = ":" + server.getServerName() + " PONG " + \
 							server.getServerName() + " :" + params[0] + CRLF;
 	sendToClient(client, response);
+}
+
+void IrcCommands::handlePass(Client& client, const std::vector<std::string>& params)
+{
+	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+		std::cout << *it << std::endl;
+	if (params.empty()) {
+		throw IrcException(ERR_NEEDMOREPARAMS + " PASS :Not enough parameters");
+	}
+	if (client.isAuthenticated()) {
+		throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
+	}
+	if (params[0] != server.getPassword()) {
+		throw IrcException(ERR_PASSWDMISMATCH + " :Password incorrect");
+	}
+	client.setAuthenticated(true);
+}
+
+void IrcCommands::handleNick(Client& client, const std::vector<std::string>& params)
+{
+	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+		std::cout << *it << std::endl;
+	if (params.empty()) {
+		throw IrcException(ERR_NONICKNAMEGIVEN + " :No nickname given");
+	}
+	std::string newNick = params[0];
+	if (newNick.length() > MAX_NICKNAME_LENGTH) {
+		throw IrcException(ERR_ERRONEUSNICKNAME + " " + newNick + " :Nickname is too long");
+	}
+	if (server.isNickInUse(newNick)) {
+		throw IrcException(ERR_NICKNAMEINUSE + " " + newNick + " :Nickname is already in use");
+	}
+	std::string oldNick = client.getNickname();
+	client.setNickname(newNick);
+	server.updateNickname(client, oldNick, newNick);
+	if (client.isRegistered()) {
+		broadcastToAll(":" + oldNick + " NICK " + newNick + CRLF);
+	}
+}
+
+void IrcCommands::handleUser(Client& client, const std::vector<std::string>& params)
+{
+	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+		std::cout << *it << std::endl;
+	if (params.size() < 4) {
+		throw IrcException(ERR_NEEDMOREPARAMS + " USER :Not enough parameters");
+	}
+	if (client.isRegistered()) {
+		throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
+	}
+	client.setUsername(params[0]);
+	client.setRealName(params[3]);
+	if (client.isAuthenticated() && !client.getNickname().empty())
+	{
+		client.setRegistered(true);
+		welcomeClient(client);
+	}
 }

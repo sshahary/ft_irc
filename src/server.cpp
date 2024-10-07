@@ -9,7 +9,8 @@ _____________________________________________________________________________*/
 
 Server::Server(const Config &config) :	serverSocket(-1),
 										isRunning(true),
-										config(config)
+										config(config),
+										serverName("ircserv")
 {
 	Logger::info( "Server created with port: " + \
 				Logger::intToString(config.getPort()) + \
@@ -167,4 +168,31 @@ void Server::removeClient(int clientFd)
 const std::string& Server::getServerName() const
 {
 	return serverName;
+}
+
+const std::string& Server::getPassword() const
+{
+	return config.getPassword();
+}
+
+const std::map<int, Client>& Server::get_clients() const
+{
+	return clients;
+}
+
+/*_____________________________________________________________________________
+								NICK COMMAND
+_____________________________________________________________________________*/
+
+
+bool Server::isNickInUse(const std::string& nickname)
+{
+	return nickToFd.find(nickname) != nickToFd.end();
+}
+
+void Server::updateNickname(Client& client, const std::string& oldNick, const std::string& newNick)
+{
+	if (!oldNick.empty())
+		nickToFd.erase(oldNick);
+	nickToFd[newNick] = client.getFd();
 }
