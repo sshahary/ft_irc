@@ -5,6 +5,7 @@
 # include "Common.hpp"
 # include "Client.hpp"
 # include "Config.hpp"
+# include "IrcCommands.hpp"
 
 class Server
 {
@@ -34,6 +35,7 @@ class Server
 		std::vector<struct pollfd>		pollFds;				// Polling structures for clients
 		std::map<int, Client>			clients;
 		std::string						serverName;
+		IrcCommands						ircCommands;
 
 		std::map<std::string, int> nickToFd;	// NICK
 

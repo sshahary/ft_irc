@@ -10,7 +10,8 @@ _____________________________________________________________________________*/
 Server::Server(const Config &config) :	serverSocket(-1),
 										isRunning(true),
 										config(config),
-										serverName("ircserv")
+										serverName("ircserv"),
+										ircCommands(*this)
 {
 	Logger::info( "Server created with port: " + \
 				Logger::intToString(config.getPort()) + \
@@ -143,6 +144,8 @@ void Server::processClientData(int clientFd)
 	{
 		buffer[bytesReceived] = '\0';
 		Logger::chat("Client <" + Logger::intToString(clientFd) + "> sent: " + buffer);
+		std::string message(buffer);
+		ircCommands.ircCommandsDispatcher(clients[clientFd], message);
 	}
 }
 
