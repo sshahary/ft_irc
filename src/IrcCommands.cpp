@@ -168,24 +168,6 @@ void IrcCommands::handlePass(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handleNick(Client& client, const std::vector<std::string>& params)
 {
-	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-	// 	std::cout << *it << std::endl;
-	// if (params.empty()) {
-	// 	throw IrcException(ERR_NONICKNAMEGIVEN + " :No nickname given");
-	// }
-	// std::string newNick = params[0];
-	// if (newNick.length() > MAX_NICKNAME_LENGTH) {
-	// 	throw IrcException(ERR_ERRONEUSNICKNAME + " " + newNick + " :Nickname is too long");
-	// }
-	// if (server.isNickInUse(newNick)) {
-	// 	throw IrcException(ERR_NICKNAMEINUSE + " " + newNick + " :Nickname is already in use");
-	// }
-	// std::string oldNick = client.getNickname();
-	// client.setNickname(newNick);
-	// server.updateNickname(client, oldNick, newNick);
-	// if (client.isRegistered()) {
-	// 	broadcastToAll(":" + oldNick + " NICK " + newNick + CRLF);
-	// }
 	if (!client.isAuthenticated())
 	{
 		server.sendError(client.getFd(), "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command before setting a nickname.");
@@ -237,5 +219,36 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 	// 	client.setRegistered(true);
 	// 	welcomeClient(client);
 	// }
-	
+	if (client.isRegistered())
+	{
+		server.sendError(client.getFd(), ERR_ALREADYREGISTERED, ":You may not reregister");
+		return;
+	}
+	if (!client.isAuthenticated())
+	{
+		server.sendError(client.getFd(), "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command and should has nickname.");
+		std::cout << RED << "Client " << client.getFd() << " attempted to set username without authentication." << std::endl;
+		return;
+	}
+	if (params.size() < 4)
+	{
+		server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, ":Not enough parameters");
+		return;
+	}
+	if (!client.hasNickSet())
+	{
+		server.sendError(client.getFd(), ERR_NONICKNAMEGIVEN, ":Nickname must be provided before USER");
+		return;
+	}
+	client.setUsername(params[0]);
+	client.setRealName(params[3]);
+	if (client.isAuthenticated() && client.hasNickSet())
+	{
+		client.setRegistered(true);
+		welcomeClient(client);
+		std::cout << GRE << "Client " << client.getFd() << " registered with username '" << params[0] << "' and real name '" << params[3] << "'" << std::endl;
+	}
+	else
+		std::cout << "Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS)." << std::endl;
+
 }
