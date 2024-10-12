@@ -23,6 +23,9 @@ class Server
 		bool		isNickInUse(const std::string& nickname);	// NICK
 		void		updateNickname(Client& client, const std::string& oldNick, const std::string& newNick);	// NICK
 
+		// Messages
+		void		sendError(int clientFd, const std::string& errorCode, const std::string& message);
+
 	private:
 		void		createSocket();					// Create and bind server socket
 		void		acceptNewClient();				// Accept new client connection
