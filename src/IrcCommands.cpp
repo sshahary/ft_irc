@@ -61,6 +61,9 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 		case CMD_KICK:
 			handleKick(client, params);
 			break;
+		case CMD_TOPIC:
+			handleTopic(client, params);
+			break;
 		default:
 			sendToClient(client,
 				":" + server.getServerName() + " " + ERR_UNKNOWNCOMMAND + " " +
@@ -105,6 +108,8 @@ int IrcCommands::getCommandType(const std::string& command)
 		return CMD_INVITE;
 	if (command == "KICK")
 		return CMD_KICK;
+	if (command == "TOPIC")
+		return CMD_TOPIC;
 	if (command == "PRIVMSG")
 		return CMD_PRIVMSG;
 	return CMD_UNKNOWN;
@@ -266,81 +271,60 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 
 }
 
-void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params){
-    // Check if the client is fully registered
+void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params) {
     if (!client.isRegistered()) {
-        server.sendError(client.getFd(), ERR_NOTREGISTERED, ":You have not registered" + std::string(CRLF));
+        server.sendError(client.getFd(), "451", ":You have not registered"); // ERR_NOTREGISTERED
         return;
     }
 
-    // Check if channel name is provided
-    if (params.empty()) {
-        server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters" + std::string(CRLF));
+    if (params.size() < 1) {
+        server.sendError(client.getFd(), "461", "JOIN :Not enough parameters"); // ERR_NEEDMOREPARAMS
         return;
     }
 
-    std::string channelName = params[0];
-
-    // Validate channel name (should start with '#' or '&')
-    if (channelName.empty() || (channelName[0] != '#' && channelName[0] != '&')) {
-        server.sendError(client.getFd(), ERR_NOSUCHCHANNEL, channelName + " :No such channel" + std::string(CRLF));
-        return;
-    }
-
-    // Get or create the channel
+    std::string channelName = params[1];
     Channel* channel = server.getChannel(channelName);
-    if (!channel) {
-        // Create a new channel
+
+    if (channel) {
+        // If the channel exists, check if the client is already a member
+        if (channel->isClient(&client)) {
+            // Send error message: Client is already in the channel
+            server.sendError(client.getFd(), "443", channelName + " :You're already in that channel"); // ERR_USERONCHANNEL
+            return;
+        }
+    } else {
+        // Channel does not exist, create and add to server
         channel = new Channel(channelName);
         server.addChannel(channel);
     }
 
-    // Check if the client is already in the channel
-    if (channel->isMember(client)) {
-        std::string error = ":" + server.getServerName() + " " + "443 " + client.getNickname() + " " + channelName + " :You're already on that channel" + CRLF;
-        server.sendRawMessage(client.getFd(), error);
-        return;
-    }
+    // Add client to the channel
+    channel->addClient(&client);
 
-    // Check if the client was invited
-    if (!channel->isInvited(client)) {
-        // For simplicity, let's assume channels are invite-only if they have any invites
-        // Alternatively, implement channel modes to determine invite-only status
-        // Here, we'll allow joining without an invite
-        // To enforce invite-only, uncomment the following lines:
-
-        /*
-        std::string error = ":" + server.getServerName() + " " + "473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i)" + CRLF;
-        server.sendRawMessage(client.getFd(), error);
-        return;
-        */
-    }
-
-    // Add the client to the channel
-    channel->addMember(client);
-    channel->removeInvite(client); // Remove the invite as it's used
-
-    // Send JOIN message to all channel members
-    std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN " + channelName + CRLF;
+    // Broadcast JOIN message to all channel members
+    std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n";
     channel->broadcast(joinMessage, &client);
 
-    // Send topic if set
-    if (!channel->getTopic().empty()) {
-        std::string topicMessage = ":" + server.getServerName() + " " + RPL_TOPIC + " " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + CRLF;
-        server.sendRawMessage(client.getFd(), topicMessage);
-    }
-    else {
-        std::string noTopicMessage = ":" + server.getServerName() + " " + RPL_NOTOPIC + " " + client.getNickname() + " " + channelName + " :No topic is set" + CRLF;
-        server.sendRawMessage(client.getFd(), noTopicMessage);
+    // Send topic information if available, otherwise indicate no topic
+    if (channel->hasTopic()) {
+        std::string topicMessage = ":" + server.getServerName() + " 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+        server.sendRawMessage(client.getFd(), topicMessage); // RPL_TOPIC
+    } else {
+        std::string noTopicMessage = ":" + server.getServerName() + " 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n";
+        server.sendRawMessage(client.getFd(), noTopicMessage); // RPL_NOTOPIC
     }
 
-    // Send NAMES list
-    std::string namesMessage = ":" + server.getServerName() + " " + RPL_NAMREPLY + " " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + CRLF;
-    server.sendRawMessage(client.getFd(), namesMessage);
+    // Send the list of users in the channel (NAMES list)
+    std::string namesMessage = ":" + server.getServerName() + " 353 " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + "\r\n";
+    server.sendRawMessage(client.getFd(), namesMessage); // RPL_NAMREPLY
 
-    std::string endOfNamesMessage = ":" + server.getServerName() + " " + RPL_ENDOFNAMES + " " + client.getNickname() + " " + channelName + " :End of /NAMES list" + CRLF;
-    server.sendRawMessage(client.getFd(), endOfNamesMessage);
+    // Send end of NAMES list message
+    std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
+    server.sendRawMessage(client.getFd(), endOfNamesMessage); // RPL_ENDOFNAMES
 }
+
+
+
 
 void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
     if (!client.isRegistered()) {
@@ -455,3 +439,45 @@ void IrcCommands::handleKick(Client& client, const std::vector<std::string>& par
     // 9. Notify the Kicked User
     server.sendRawMessage(targetClient->getFd(), kickMessage);
 }
+
+void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& params) {
+    // Check if client is registered
+    if (!client.isRegistered()) {
+        server.sendError(client.getFd(), "451", "You have not registered");
+        return;
+    }
+
+    // Ensure channel name parameter is provided
+    if (params.size() < 1) {
+        server.sendError(client.getFd(), "461", "TOPIC :Not enough parameters");
+        return;
+    }
+
+    std::string channelName = params[0];
+    Channel* channel = server.getChannel(channelName);
+
+    // Check if channel exists
+    if (!channel) {
+        server.sendError(client.getFd(), "403", channelName + " :No such channel");
+        return;
+    }
+
+    // If only the channel name is given, return the current topic
+    if (params.size() == 1) {
+        if (channel->hasTopic()) {
+            std::string topicMessage = ":" + server.getServerName() + " 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + CRLF; // RPL_TOPIC
+            server.sendRawMessage(client.getFd(), topicMessage);
+        } else {
+            std::string noTopicMessage = ":" + server.getServerName() + " 331 " + client.getNickname() + " " + channelName + " :No topic is set" + CRLF; // RPL_NOTOPIC
+            server.sendRawMessage(client.getFd(), noTopicMessage);
+        }
+    } 
+    // Otherwise, set a new topic
+    else {
+        std::string newTopic = params[1];
+        channel->setTopic(newTopic);
+        channel->broadcast(":" + client.getNickname() + " TOPIC " + channelName + " :" + newTopic + CRLF, &client);
+    }
+}
+
+

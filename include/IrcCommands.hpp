@@ -16,6 +16,7 @@ enum CommandType
 	CMD_JOIN,
 	CMD_INVITE,
 	CMD_KICK,
+	CMD_TOPIC,
 	CMD_PRIVMSG,
 	CMD_UNKNOWN
 };
@@ -42,7 +43,8 @@ class IrcCommands
 		void handleUser(Client& client, const std::vector<std::string>& params);
 		void handleJoin(Client& client, const std::vector<std::string>& params);
     	void handleInvite(Client& client, const std::vector<std::string>& params);
-    	void handleKick(Client& client, const std::vector<std::string>& params); 
+    	void handleKick(Client& client, const std::vector<std::string>& params);
+		void handleTopic(Client& client, const std::vector<std::string>& params);
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:57:58 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/12 17:14:44 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/12 18:38:36 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,11 @@ public:
     const std::string& getTopic() const;
     void setTopic(const std::string& topic);
 
+     void addClient(Client* client); 
+     
     bool isMember(const Client& client) const;
+    bool isClient(const Client* client) const;
+
     void addMember(Client& client);
     void removeMember(const Client& client);
 
@@ -44,6 +48,7 @@ public:
     bool isOperator(const Client& client) const;
     void addOperator(Client& client);
     void removeOperator(const Client& client);
+    bool hasTopic() const;
 
 private:
     std::string name;
@@ -51,6 +56,8 @@ private:
     std::set<int> members;         // Set of client file descriptors
     std::set<int> invitedClients;  // Set of invited client file descriptors
     std::set<int> operators;
+    bool topicSet;
+    std::map<int, Client*> clients;
 };
 
 #endif // CHANNEL_HPP

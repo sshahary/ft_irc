@@ -6,7 +6,7 @@
 /*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:53:44 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/12 15:53:47 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/12 18:17:04 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Client
 		void setRegistered(bool registered);
 		void setNickSet(bool nickSet);
 
+		void sendRawMessage(const std::string& message);
 		// void		setFd(int fd);
 		// void		setIpAddress(const std::string &ipAddress);
 
