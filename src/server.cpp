@@ -2,6 +2,8 @@
 #include "Config.hpp"
 #include "Logger.hpp"
 #include "IrcException.hpp"
+#include "IrcCommands.hpp"
+
 
 /*_____________________________________________________________________________
 								ORTHODOX CANONICAL FORM

@@ -62,5 +62,3 @@ void Client::setRealName(const std::string& newRealName) { realName = newRealNam
 void Client::setHostname(const std::string& newHostname) { hostname = newHostname; }
 void Client::setAuthenticated(bool isAuthenticated) { authenticated = isAuthenticated; }
 void Client::setRegistered(bool isRegistered) { registered = isRegistered; }
-
-

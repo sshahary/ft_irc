@@ -144,18 +144,35 @@ void IrcCommands::handlePing(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handlePass(Client& client, const std::vector<std::string>& params)
 {
-	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-		std::cout << *it << std::endl;
-	if (params.empty()) {
+	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+	// 	std::cout << *it << std::endl;
+	// if (params.empty()) {
+	// 	throw IrcException(ERR_NEEDMOREPARAMS + " PASS :Not enough parameters");
+	// }
+	// if (client.isAuthenticated()) {
+	// 	throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
+	// }
+	// if (params[0] != server.getPassword()) {
+	// 	throw IrcException(ERR_PASSWDMISMATCH + " :Password incorrect");
+	// }
+	// client.setAuthenticated(true);
+	if (params.size() < 1 || params.empty())
+	{
 		throw IrcException(ERR_NEEDMOREPARAMS + " PASS :Not enough parameters");
 	}
-	if (client.isAuthenticated()) {
-		throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
+	if (client.isAuthenticated())
+		throw IrcException(ERR_ALREADYREGISTERED + " PASS :You are already register");
+	if (params[0] == server.getPassword())
+	{
+		client.setAuthenticated(true);
+		std::cout<< GRE << "Password is validated" << std::endl;
 	}
-	if (params[0] != server.getPassword()) {
-		throw IrcException(ERR_PASSWDMISMATCH + " :Password incorrect");
+	else
+	{
+		throw IrcException(ERR_PASSWDMISMATCH + " PASS :Incorrect password");
+		std::cerr << RED << " invalid password" << std::endl;
 	}
-	client.setAuthenticated(true);
+
 }
 
 void IrcCommands::handleNick(Client& client, const std::vector<std::string>& params)
