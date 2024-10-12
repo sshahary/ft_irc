@@ -38,6 +38,9 @@ class IrcCommands
 		void handlePass(Client& client, const std::vector<std::string>& params);
 		void handleNick(Client& client, const std::vector<std::string>& params);
 		void handleUser(Client& client, const std::vector<std::string>& params);
+		void handleJoin(Client& client, const std::vector<std::string>& params);
+		void handleInvite(Client& client, const std::vector<std::string>& params);
+		void handleMode(Client& client, const std::vecotr<std::string>& params);
 };
 
 #endif
