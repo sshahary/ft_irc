@@ -168,41 +168,74 @@ void IrcCommands::handlePass(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handleNick(Client& client, const std::vector<std::string>& params)
 {
-	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-		std::cout << *it << std::endl;
-	if (params.empty()) {
-		throw IrcException(ERR_NONICKNAMEGIVEN + " :No nickname given");
+	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+	// 	std::cout << *it << std::endl;
+	// if (params.empty()) {
+	// 	throw IrcException(ERR_NONICKNAMEGIVEN + " :No nickname given");
+	// }
+	// std::string newNick = params[0];
+	// if (newNick.length() > MAX_NICKNAME_LENGTH) {
+	// 	throw IrcException(ERR_ERRONEUSNICKNAME + " " + newNick + " :Nickname is too long");
+	// }
+	// if (server.isNickInUse(newNick)) {
+	// 	throw IrcException(ERR_NICKNAMEINUSE + " " + newNick + " :Nickname is already in use");
+	// }
+	// std::string oldNick = client.getNickname();
+	// client.setNickname(newNick);
+	// server.updateNickname(client, oldNick, newNick);
+	// if (client.isRegistered()) {
+	// 	broadcastToAll(":" + oldNick + " NICK " + newNick + CRLF);
+	// }
+	if (!client.isAuthenticated())
+	{
+		server.sendError(client.getFd(), "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command before setting a nickname.");
+		std::cout << RED << "Client " << client.getFd() << " attempted to set nickname without authentication." << std::endl;
+		return;
 	}
-	std::string newNick = params[0];
-	if (newNick.length() > MAX_NICKNAME_LENGTH) {
-		throw IrcException(ERR_ERRONEUSNICKNAME + " " + newNick + " :Nickname is too long");
+	if (params.size() < 1 || params.empty())
+	{
+		std::cout<<"nick error";
+		server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, "NICK :Not enough parameters");
+		return;
 	}
-	if (server.isNickInUse(newNick)) {
-		throw IrcException(ERR_NICKNAMEINUSE + " " + newNick + " :Nickname is already in use");
+	std::string newNickname = params[0];
+	if (server.isNickInUse(newNickname))
+	{
+		server.sendError(client.getFd(), ERR_NICKNAMEINUSE, newNickname + " :Nickname is already in use");
+		return;
 	}
-	std::string oldNick = client.getNickname();
-	client.setNickname(newNick);
-	server.updateNickname(client, oldNick, newNick);
-	if (client.isRegistered()) {
-		broadcastToAll(":" + oldNick + " NICK " + newNick + CRLF);
+	std::string oldNickname = client.getNickname();
+	client.setNickname(newNickname);
+	client.setNickSet(true);
+	server.updateNickname(client, oldNickname, newNickname);
+	std::cout << GRE << "Client " << client.getFd() << " set nickname to '" << newNickname << "'" << std::endl;
+	if (client.isRegistered())
+	{
+		broadcastToAll(":" + oldNickname + " NICK " + newNickname + CRLF);
 	}
+	if (client.isAuthenticated())
+	{
+		std::cout << GRE << "Client has provided NICK, waiting for USER to fully register." << std::endl;
+	}
+
 }
 
 void IrcCommands::handleUser(Client& client, const std::vector<std::string>& params)
 {
-	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-		std::cout << *it << std::endl;
-	if (params.size() < 4) {
-		throw IrcException(ERR_NEEDMOREPARAMS + " USER :Not enough parameters");
-	}
-	if (client.isRegistered()) {
-		throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
-	}
-	client.setUsername(params[0]);
-	client.setRealName(params[3]);
-	if (client.isAuthenticated() && !client.getNickname().empty())
-	{
-		client.setRegistered(true);
-		welcomeClient(client);
-	}
+	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
+	// 	std::cout << *it << std::endl;
+	// if (params.size() < 4) {
+	// 	throw IrcException(ERR_NEEDMOREPARAMS + " USER :Not enough parameters");
+	// }
+	// if (client.isRegistered()) {
+	// 	throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
+	// }
+	// client.setUsername(params[0]);
+	// client.setRealName(params[3]);
+	// if (client.isAuthenticated() && !client.getNickname().empty())
+	// {
+	// 	client.setRegistered(true);
+	// 	welcomeClient(client);
+	// }
+	
 }

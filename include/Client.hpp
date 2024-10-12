@@ -21,6 +21,7 @@ class Client
 		const std::string& getHostname() const;
 		bool isAuthenticated() const;
 		bool isRegistered() const;
+		bool hasNickSet() const;
 
 		void setNickname(const std::string& nickname);
 		void setUsername(const std::string& username);
@@ -28,6 +29,7 @@ class Client
 		void setHostname(const std::string& hostname);
 		void setAuthenticated(bool authenticated);
 		void setRegistered(bool registered);
+		void setNickSet(bool nickSet);
 
 		// void		setFd(int fd);
 		// void		setIpAddress(const std::string &ipAddress);
@@ -42,6 +44,7 @@ class Client
 		std::string		hostname;
 		bool authenticated;
 		bool registered;
+		bool nickSet;
 };
 
 #endif

@@ -10,9 +10,9 @@ _____________________________________________________________________________*/
 
 Client::Client(int fd) : clientFd(fd) {} */
 
-Client::Client() : clientFd(-1), authenticated(false), registered(false) {}
+Client::Client() : clientFd(-1), authenticated(false), registered(false), nickSet(false){}
 
-Client::Client(int fd) : clientFd(fd), authenticated(false), registered(false) {}
+Client::Client(int fd) : clientFd(fd), authenticated(false), registered(false), nickSet(false){}
 
 Client::~Client() {}
 
@@ -42,6 +42,7 @@ const std::string& Client::getRealName() const { return realName; }
 const std::string& Client::getHostname() const { return hostname; }
 bool Client::isAuthenticated() const { return authenticated; }
 bool Client::isRegistered() const { return registered; }
+bool Client::hasNickSet() const { return nickSet; }
 
 
 
@@ -62,3 +63,4 @@ void Client::setRealName(const std::string& newRealName) { realName = newRealNam
 void Client::setHostname(const std::string& newHostname) { hostname = newHostname; }
 void Client::setAuthenticated(bool isAuthenticated) { authenticated = isAuthenticated; }
 void Client::setRegistered(bool isRegistered) { registered = isRegistered; }
+void Client::setNickSet(bool isNickSet) { nickSet = isNickSet;}
