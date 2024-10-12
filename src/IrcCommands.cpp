@@ -52,6 +52,15 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 		case CMD_PING:
 			handlePing(client, params);
 			break;
+		case CMD_JOIN:
+			handleJoin(client, params);
+			break;
+		case CMD_INVITE:
+			handleInvite(client, params);
+			break;
+		case CMD_KICK:
+			handleKick(client, params);
+			break;
 		default:
 			sendToClient(client,
 				":" + server.getServerName() + " " + ERR_UNKNOWNCOMMAND + " " +
@@ -92,6 +101,10 @@ int IrcCommands::getCommandType(const std::string& command)
 		return CMD_USER;
 	if (command == "JOIN")
 		return CMD_JOIN;
+	if (command == "INVITE")
+		return CMD_INVITE;
+	if (command == "KICK")
+		return CMD_KICK;
 	if (command == "PRIVMSG")
 		return CMD_PRIVMSG;
 	return CMD_UNKNOWN;
@@ -251,4 +264,194 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 	else
 		std::cout << "Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS)." << std::endl;
 
+}
+
+void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params){
+    // Check if the client is fully registered
+    if (!client.isRegistered()) {
+        server.sendError(client.getFd(), ERR_NOTREGISTERED, ":You have not registered" + std::string(CRLF));
+        return;
+    }
+
+    // Check if channel name is provided
+    if (params.empty()) {
+        server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters" + std::string(CRLF));
+        return;
+    }
+
+    std::string channelName = params[0];
+
+    // Validate channel name (should start with '#' or '&')
+    if (channelName.empty() || (channelName[0] != '#' && channelName[0] != '&')) {
+        server.sendError(client.getFd(), ERR_NOSUCHCHANNEL, channelName + " :No such channel" + std::string(CRLF));
+        return;
+    }
+
+    // Get or create the channel
+    Channel* channel = server.getChannel(channelName);
+    if (!channel) {
+        // Create a new channel
+        channel = new Channel(channelName);
+        server.addChannel(channel);
+    }
+
+    // Check if the client is already in the channel
+    if (channel->isMember(client)) {
+        std::string error = ":" + server.getServerName() + " " + "443 " + client.getNickname() + " " + channelName + " :You're already on that channel" + CRLF;
+        server.sendRawMessage(client.getFd(), error);
+        return;
+    }
+
+    // Check if the client was invited
+    if (!channel->isInvited(client)) {
+        // For simplicity, let's assume channels are invite-only if they have any invites
+        // Alternatively, implement channel modes to determine invite-only status
+        // Here, we'll allow joining without an invite
+        // To enforce invite-only, uncomment the following lines:
+
+        /*
+        std::string error = ":" + server.getServerName() + " " + "473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i)" + CRLF;
+        server.sendRawMessage(client.getFd(), error);
+        return;
+        */
+    }
+
+    // Add the client to the channel
+    channel->addMember(client);
+    channel->removeInvite(client); // Remove the invite as it's used
+
+    // Send JOIN message to all channel members
+    std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN " + channelName + CRLF;
+    channel->broadcast(joinMessage, &client);
+
+    // Send topic if set
+    if (!channel->getTopic().empty()) {
+        std::string topicMessage = ":" + server.getServerName() + " " + RPL_TOPIC + " " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + CRLF;
+        server.sendRawMessage(client.getFd(), topicMessage);
+    }
+    else {
+        std::string noTopicMessage = ":" + server.getServerName() + " " + RPL_NOTOPIC + " " + client.getNickname() + " " + channelName + " :No topic is set" + CRLF;
+        server.sendRawMessage(client.getFd(), noTopicMessage);
+    }
+
+    // Send NAMES list
+    std::string namesMessage = ":" + server.getServerName() + " " + RPL_NAMREPLY + " " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + CRLF;
+    server.sendRawMessage(client.getFd(), namesMessage);
+
+    std::string endOfNamesMessage = ":" + server.getServerName() + " " + RPL_ENDOFNAMES + " " + client.getNickname() + " " + channelName + " :End of /NAMES list" + CRLF;
+    server.sendRawMessage(client.getFd(), endOfNamesMessage);
+}
+
+void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
+    if (!client.isRegistered()) {
+        server.sendError(client.getFd(), ERR_NOTREGISTERED, ":You have not registered" + std::string(CRLF));
+        return;
+    }
+
+    if (params.size() < 2) {
+        server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, "INVITE :Not enough parameters" + std::string(CRLF));
+        return;
+    }
+
+    std::string nickname = params[0];
+    std::string channelName = params[1];
+
+    // Check if the nickname exists
+    Client* targetClient = server.getClientByNickname(nickname);
+    if (!targetClient) {
+        std::string error = ":" + server.getServerName() + " " + "401 " + client.getNickname() + " " + nickname + " :No such nick/channel" + CRLF;
+        server.sendRawMessage(client.getFd(), error);
+        return;
+    }
+
+    // Check if the channel exists
+    Channel* channel = server.getChannel(channelName);
+    if (!channel) {
+        std::string error = ":" + server.getServerName() + " " + "403 " + client.getNickname() + " " + channelName + " :No such channel" + CRLF;
+        server.sendRawMessage(client.getFd(), error);
+        return;
+    }
+
+    // Check if the client is a member of the channel
+    if (!channel->isMember(client)) {
+        std::string error = ":" + server.getServerName() + " " + "442 " + client.getNickname() + " " + channelName + " :You're not on that channel" + CRLF;
+        server.sendRawMessage(client.getFd(), error);
+        return;
+    }
+
+    // Invite the target client
+    channel->addInvite(*targetClient);
+
+    // Send invite message to the target client
+    std::string inviteMessage = ":" + client.getNickname() + " INVITE " + nickname + " " + channelName + CRLF;
+    server.sendRawMessage(targetClient->getFd(), inviteMessage);
+}
+
+
+void IrcCommands::handleKick(Client& client, const std::vector<std::string>& params) {
+    // KICK <channel> <user> [<comment>]
+
+    // 1. Registration Check
+    if (!client.isRegistered()) {
+        server.sendTargetError(client.getFd(), ERR_NOTREGISTERED, client.getNickname(), "You have not registered" + std::string(CRLF));
+        return;
+    }
+
+    // 2. Parameter Validation
+    if (params.size() < 2) {
+        server.sendTargetError(client.getFd(), ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters" + std::string(CRLF));
+        return;
+    }
+
+    std::string channelName = params[0];
+    std::string targetNickname = params[1];
+    std::string comment = (params.size() >= 3) ? params[2] : "No comment";
+
+    // 3. Channel Validation
+    Channel* channel = server.getChannel(channelName);
+    if (!channel) {
+        server.sendTargetError(client.getFd(), ERR_NOSUCHCHANNEL, channelName, "No such channel" + std::string(CRLF));
+        return;
+    }
+
+    // 4. Client Membership Check
+    if (!channel->isMember(client)) {
+        server.sendTargetError(client.getFd(), "442", channelName, "You're not on that channel" + std::string(CRLF));
+        return;
+    }
+
+    // 5. Target User Validation
+    Client* targetClient = server.getClientByNickname(targetNickname);
+    if (!targetClient) {
+        server.sendTargetError(client.getFd(), "401", targetNickname, "No such nick/channel" + std::string(CRLF));
+        return;
+    }
+
+    if (!channel->isMember(*targetClient)) {
+        server.sendTargetError(client.getFd(), ERR_USERONCHANNEL, channelName, targetNickname + " :They are not on that channel" + std::string(CRLF));
+        return;
+    }
+
+    // 6. Permission Check (Optional)
+    // If implementing operator permissions, uncomment the following:
+    /*
+    if (!channel->isOperator(client)) {
+        server.sendError(client.getFd(), "482", channelName, "You're not channel operator" + std::string(CRLF));
+        return;
+    }
+    */
+
+    // 7. Perform the Kick
+    channel->removeMember(*targetClient);
+
+    // 8. Broadcast the Kick
+    std::stringstream kickMessageStream;
+    kickMessageStream << ":" << client.getNickname() << "!user@" << "hostname"
+                      << " KICK " << channelName << " " << targetNickname
+                      << " :" << comment << CRLF;
+    std::string kickMessage = kickMessageStream.str();
+    channel->broadcast(kickMessage, &client);
+
+    // 9. Notify the Kicked User
+    server.sendRawMessage(targetClient->getFd(), kickMessage);
 }

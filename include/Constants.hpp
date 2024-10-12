@@ -27,4 +27,17 @@ const std::string ERR_ERRONEUSNICKNAME = "432";
 const std::string ERR_NICKNAMEINUSE = "433";
 
 
+#define ERR_PASSWDMISMATCH "464"
+#define ERR_NOTREGISTERED "451"
+#define ERR_USERONCHANNEL "443"
+#define ERR_NOSUCHCHANNEL "403"
+
+
+// Reply Codes
+#define RPL_TOPIC "332"
+#define RPL_NOTOPIC "331"
+#define RPL_NAMREPLY "353"
+#define RPL_ENDOFNAMES "366"
+
+
 #endif

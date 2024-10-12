@@ -37,6 +37,13 @@ void Server::stop()
 		Logger::intToString(clientFd));
 		close(clientFd); // Close the client socket
 	}
+
+	for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    {
+        delete it->second;
+    }
+    channels.clear();
+
 	if (serverSocket != -1)
 	{
 		Logger::info("Shutting down the server: " + \
@@ -166,6 +173,11 @@ void Server::removeClient(int clientFd)
 	std::map<int, Client>::iterator it = clients.find(clientFd);
 	if (it != clients.end()) 
 	{
+		// Remove nickname mapping if set
+        if (!it->second.getNickname().empty())
+        {
+            removeNickname(it->second.getNickname());
+        }
 		clients.erase(it); // Erase the client using the iterator
 	}
 }
@@ -200,4 +212,91 @@ void Server::updateNickname(Client& client, const std::string& oldNick, const st
 	if (!oldNick.empty())
 		nickToFd.erase(oldNick);
 	nickToFd[newNick] = client.getFd();
+}
+
+/*_____________________________________________________________________________
+                                NEW MEMBER FUNCTIONS
+_____________________________________________________________________________*/
+
+// Function to send raw messages to clients
+void Server::sendRawMessage(int clientFd, const std::string& message)
+{
+    ssize_t totalSent = 0;
+    ssize_t messageLength = message.length();
+    const char* msg = message.c_str();
+
+    while (totalSent < messageLength)
+    {
+        ssize_t sent = send(clientFd, msg + totalSent, messageLength - totalSent, 0);
+        if (sent == -1)
+        {
+            Logger::error("Failed to send message to client FD " + Logger::intToString(clientFd));
+            break;
+        }
+        totalSent += sent;
+    }
+}
+
+// Function to retrieve a client by file descriptor
+Client* Server::getClient(int fd)
+{
+    std::map<int, Client>::iterator it = clients.find(fd);
+    if (it != clients.end())
+    {
+        return &(it->second);
+    }
+    return nullptr;
+}
+
+// Function to retrieve a channel by name
+Channel* Server::getChannel(const std::string& channelName)
+{
+    std::map<std::string, Channel*>::iterator it = channels.find(channelName);
+    if (it != channels.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+// Function to add a channel
+void Server::addChannel(Channel* channel)
+{
+    if (channel)
+    {
+        channels[channel->getName()] = channel;
+        Logger::info("Channel created: " + channel->getName());
+    }
+}
+
+void Server::removeChannel(const std::string& channelName) {
+    std::map<std::string, Channel*>::iterator it = channels.find(channelName);
+    if (it != channels.end()) {
+        delete it->second;
+        channels.erase(it);
+        Logger::info("Channel removed: " + channelName);
+    }
+}
+
+// Function to retrieve a client by nickname
+Client* Server::getClientByNickname(const std::string& nickname)
+{
+    std::map<std::string, int>::iterator it = nickToFd.find(nickname);
+    if (it != nickToFd.end())
+    {
+        return getClient(it->second);
+    }
+    return nullptr;
+}
+
+// Function to add a nickname
+void Server::addNickname(const std::string& nickname, int fd)
+{
+    nickToFd[nickname] = fd;
+}
+
+// Function to remove a nickname
+void Server::removeNickname(const std::string& nickname)
+{
+    nickToFd.erase(nickname);
 }
