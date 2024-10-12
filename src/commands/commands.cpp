@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/09 15:14:59 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/29 16:14:02 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/10/01 17:12:10 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,12 @@ void Server::handleUserCommand(int clientFd, const std::vector<std::string>& par
 		sendError(clientFd, ERR_ALREADYREGISTERED, ":You may not reregister");
 		return;
 	}
-
+	if (!client->isAuthenticated())
+	{
+		sendError(clientFd, "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command and should has nickname.");
+		std::cout << "Client " << clientFd << " attempted to set username without authentication." << std::endl;
+		return;
+	}
 	if (params.size() < 4)
 	{
 		sendError(clientFd, ERR_NEEDMOREPARAMS, ":Not enough parameters");

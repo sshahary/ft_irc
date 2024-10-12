@@ -87,6 +87,8 @@ class Server
 		void	stop();							// Stop the server
 		// Commands
 
+		std::vector<std::string> splitMessageIntoParts(const std::string& message);
+		void	handleClientMessage(int clientFd, const std::string& message);
 		void	handlePassCommand(int clientFd, const std::vector<std::string>& params);
 		void	handleNickCommand(int clientFd, const std::vector<std::string>& params);
 		void	handleUserCommand(int clientFd, const std::vector<std::string>& params);
@@ -95,6 +97,7 @@ class Server
 		void		handleKickCommand(int clientFd, const std::vector<std::string>& params);
 		//Utility Methods
 		std::string	getChannelUsers(Channel* channel) const;
+		void	sendChannelUserList(int clientFd, Channel* channel);
 		Channel*	findChannelByName(const std::string& channelName);
 		void		broadcastToChannel(Channel* channel, const std::string& message, int excludeFd);
 		std::string	getClientNickname(int clientFd) const;

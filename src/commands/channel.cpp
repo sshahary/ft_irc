@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/23 09:21:54 by sshahary          #+#    #+#             */
-/*   Updated: 2024/09/29 15:37:21 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/10/02 11:15:19 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ void Channel::setPassword(const std::string &pass)
 
 bool Channel::checkPassword(const std::string &pass) const
 {
-	return password == pass;
+	return (password.empty() || password == pass);
 }
 
 // User Limit Management
@@ -101,6 +101,7 @@ void Channel::setUserLimit(int limit)
 bool Channel::isUserLimitExceeded() const
 {
 	return userLimit > 0 && static_cast<int>(clients.size()) >= userLimit;
+	// return (userLimit > 0 && clients.size() >= userLimit);
 }
 
 std::string Channel::getName() const
@@ -126,12 +127,14 @@ const std::set<int>& Channel::getClients() const
 
 void Server::broadcastToChannel(Channel* channel, const std::string& message, int excludeFd)
 {
-	for (int clientFd : channel->getClients()) {
-		if (clientFd != excludeFd) {
+	const std::set<int>& clients = channel->getClients();
+	for (int clientFd : clients)
+	{
+		if (clientFd != excludeFd)
 			sendToClient(clientFd, message);
-		}
 	}
 }
+
 
 void Server::sendToClient(int clientFd, const std::string& message)
 {
@@ -157,4 +160,21 @@ std::string Server::getChannelUsers(Channel* channel) const
 bool Channel::hasClient(int clientFd) const
 {
 	return clients.find(clientFd) != clients.end();
+}
+
+std::string Channel::getUsersList(const Server& server) const
+{
+	std::string userList;
+	for (std::set<int>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		userList += server.getClientNickname(*it) + " ";
+	}
+	return userList;
+}
+
+void Server::sendChannelUserList(int clientFd, Channel* channel)
+{
+	std::string userList = channel->getUsersList(*this);
+	sendToClient(clientFd, "353 " + getClientNickname(clientFd) + " = " + channel->getName() + " :" + userList);
+	sendToClient(clientFd, "366 " + getClientNickname(clientFd) + " " + channel->getName() + " :End of /NAMES list.");
 }

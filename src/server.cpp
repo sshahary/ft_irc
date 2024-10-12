@@ -127,63 +127,131 @@ void Server::removeClient(int clientFd)
 // }
 
 // Receive data from a connected client
-void Server::receiveData(int clientFd)
-{
-	char	buffer[1024];
+// void Server::receiveData(int clientFd)
+// {
+// 	char	buffer[1024];
 
-	memset(buffer, 0, sizeof(buffer));
-	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-	if (bytesReceived <= 0)
-	{
-		std::cout << RED << "Client disconnected: " << clientFd << WHI << std::endl;
-		removeClient(clientFd);
-		close(clientFd);
+// 	memset(buffer, 0, sizeof(buffer));
+// 	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+// 	if (bytesReceived <= 0)
+// 	{
+// 		std::cout << RED << "Client disconnected: " << clientFd << WHI << std::endl;
+// 		removeClient(clientFd);
+// 		close(clientFd);
+// 	}
+// 	buffer[bytesReceived] = '\0';
+// 	std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
+// 	// process received data
+// 	 // Find the client and check if they are authenticated
+// 	Client* client = findClientByFd(clientFd);
+// 	if (client == NULL)
+// 	{
+// 		std::cout << "Client not found: " << clientFd << std::endl;
+// 		return;
+// 	}
+// 	std::string command;
+// 	std::vector<std::string> params;
+// 	std::istringstream iss(buffer);
+// 	iss >> command;
+// 	std::string param;
+// 	while (iss >> param)
+// 		params.push_back(param);
+// 	// Handle commands
+// 	 // Handle the parsed command
+// 	if (command == "PASS")
+// 		handlePassCommand(clientFd, params);
+// 	else if (command == "NICK")
+// 		handleNickCommand(clientFd, params);
+// 	else if (command == "USER")
+// 		handleUserCommand(clientFd, params);
+// 	else if (command == "JOIN")
+// 		handleJoinCommand(clientFd, params);
+// 	else if (command == "KICK")
+// 		handleKickCommand(clientFd, params);
+// 	else
+// 		sendError(clientFd, "421", "Unknown command or not implemented");
+// 	// else if (command == "PART")
+// 	// 	handlePartCommand(clientFd, params);
+// 	// else if (command == "PRIVMSG")
+// 	// 	handlePrivmsgCommand(clientFd, params);
+// 	// else if (command == "QUIT")
+// 	// 	handleQuitCommand(clientFd, params);
+// 	std::string response = ""; // Placeholder response
+// 	if (send(clientFd, response.c_str(), response.length(), 0) == -1)
+// 	{
+// 		std::cout << "send() error: " << strerror(errno) << std::endl;
+// 	}
+
+// }
+
+std::vector<std::string> Server::splitMessageIntoParts(const std::string& message)
+{
+	std::vector<std::string> parts;
+	std::istringstream iss(message);
+	std::string part;
+	
+	// Split the message by spaces
+	while (iss >> part) {
+		parts.push_back(part);
 	}
-	buffer[bytesReceived] = '\0';
-	std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
-	// process received data
-	 // Find the client and check if they are authenticated
-	Client* client = findClientByFd(clientFd);
-	if (client == NULL)
-	{
-		std::cout << "Client not found: " << clientFd << std::endl;
-		return;
-	}
-	std::string command;
-	std::vector<std::string> params;
-	std::istringstream iss(buffer);
-	iss >> command;
-	std::string param;
-	while (iss >> param)
-		params.push_back(param);
-	// Handle commands
-	 // Handle the parsed command
-	if (command == "PASS")
+	
+	return parts;
+}
+
+
+void Server::handleClientMessage(int clientFd, const std::string& message)
+{
+	std::vector<std::string> params = splitMessageIntoParts(message);
+
+	// The first element should be the command
+	std::string command = params[0];
+	params.erase(params.begin());
+
+	// Handling commands
+	if (command == "JOIN")
+		handleJoinCommand(clientFd, params);
+	else if (command == "KICK")
+		handleKickCommand(clientFd, params);
+	else if (command == "PASS")
 		handlePassCommand(clientFd, params);
 	else if (command == "NICK")
 		handleNickCommand(clientFd, params);
 	else if (command == "USER")
 		handleUserCommand(clientFd, params);
-	else if (command == "JOIN")
-		handleJoinCommand(clientFd, params);
-	else if (command == "KICK")
-		handleKickCommand(clientFd, params);
 	else
-		sendError(clientFd, "421", "Unknown command or not implemented");
-	// else if (command == "PART")
-	// 	handlePartCommand(clientFd, params);
-	// else if (command == "PRIVMSG")
-	// 	handlePrivmsgCommand(clientFd, params);
-	// else if (command == "QUIT")
-	// 	handleQuitCommand(clientFd, params);
-	std::string response = ""; // Placeholder response
-	if (send(clientFd, response.c_str(), response.length(), 0) == -1)
-	{
-		std::cout << "send() error: " << strerror(errno) << std::endl;
-	}
-
+		sendError(clientFd, "421", command + " :Unknown command");
 }
 
+void Server::receiveData(int clientFd)
+{
+	char buffer[1024];
+	memset(buffer, 0, sizeof(buffer));
+
+	// Receive data from the client
+	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+	if (bytesReceived <= 0)
+	{
+		std::cout << "Client disconnected: " << clientFd << std::endl;
+		removeClient(clientFd);
+		return;
+	}
+
+	// Null-terminate the buffer to ensure it's a valid C string
+	buffer[bytesReceived] = '\0';
+	std::cout << "Client <" << clientFd << "> sent: " << buffer << std::endl;
+
+	// Find the client
+	Client* client = findClientByFd(clientFd);
+	if (client == nullptr)
+	{
+		std::cout << "Client not found: " << clientFd << std::endl;
+		return;
+	}
+
+	// Handle the client's message using handleClientMessage
+	std::string message(buffer);
+	handleClientMessage(clientFd, message);
+}
 
 // Accept a new client connection
 void Server::acceptNewClient()
