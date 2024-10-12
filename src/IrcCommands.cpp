@@ -5,6 +5,7 @@
 #include "Constants.hpp"
 #include <sstream>
 #include "IrcException.hpp"
+#include "Logger.hpp"
 
 
 /*_____________________________________________________________________________
@@ -147,22 +148,24 @@ void IrcCommands::handlePass(Client& client, const std::vector<std::string>& par
 	if (params.size() < 1 || params.empty())
 	{
 		server.sendError(client.getFd(),ERR_NEEDMOREPARAMS, "PASS :No password provided");
+		Logger::error("No password provided");
 		return ;
 	}
 	if (client.isAuthenticated())
 	{
 		server.sendError(client.getFd(), ERR_ALREADYREGISTERED,  "PASS :You already validated PASS");
+		Logger::info("You already validated PASS");
 		return ;
 	}
 	if (params[0] == server.getPassword())
 	{
 		client.setAuthenticated(true);
-		std::cout<< GRE << "Password is validated" << std::endl;
+		Logger::connection("Password is validated");
 	}
 	else
 	{
 		server.sendError(client.getFd(), ERR_PASSWDMISMATCH, "PASS :Incorrect password");
-		std::cerr << RED << " invalid password" << std::endl;
+		Logger::error("Invalid password");
 	}
 }
 
@@ -171,12 +174,11 @@ void IrcCommands::handleNick(Client& client, const std::vector<std::string>& par
 	if (!client.isAuthenticated())
 	{
 		server.sendError(client.getFd(), "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command before setting a nickname.");
-		std::cout << RED << "Client " << client.getFd() << " attempted to set nickname without authentication." << std::endl;
+		Logger::error("Attempted to set nickname without authentication.");
 		return;
 	}
 	if (params.size() < 1 || params.empty())
 	{
-		std::cout<<"nick error";
 		server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, "NICK :Not enough parameters");
 		return;
 	}
@@ -196,48 +198,34 @@ void IrcCommands::handleNick(Client& client, const std::vector<std::string>& par
 		broadcastToAll(":" + oldNickname + " NICK " + newNickname + CRLF);
 	}
 	if (client.isAuthenticated())
-	{
-		std::cout << GRE << "Client has provided NICK, waiting for USER to fully register." << std::endl;
-	}
+		Logger::connection("Client has provided NICK, waiting for USER to fully register.");
 
 }
 
 void IrcCommands::handleUser(Client& client, const std::vector<std::string>& params)
 {
-	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-	// 	std::cout << *it << std::endl;
-	// if (params.size() < 4) {
-	// 	throw IrcException(ERR_NEEDMOREPARAMS + " USER :Not enough parameters");
-	// }
-	// if (client.isRegistered()) {
-	// 	throw IrcException(ERR_ALREADYREGISTERED + " :You may not reregister");
-	// }
-	// client.setUsername(params[0]);
-	// client.setRealName(params[3]);
-	// if (client.isAuthenticated() && !client.getNickname().empty())
-	// {
-	// 	client.setRegistered(true);
-	// 	welcomeClient(client);
-	// }
 	if (client.isRegistered())
 	{
 		server.sendError(client.getFd(), ERR_ALREADYREGISTERED, ":You may not reregister");
+		Logger::error("You may not reregister");
 		return;
 	}
 	if (!client.isAuthenticated())
 	{
 		server.sendError(client.getFd(), "ERR_NOTAUTHENTICATED", "You must authenticate using the PASS command and should has nickname.");
-		std::cout << RED << "Client " << client.getFd() << " attempted to set username without authentication." << std::endl;
+		Logger::error("Attempted to set username without authentication.");
 		return;
 	}
 	if (params.size() < 4)
 	{
 		server.sendError(client.getFd(), ERR_NEEDMOREPARAMS, ":Not enough parameters");
+		Logger::error("Not enough parameters");
 		return;
 	}
 	if (!client.hasNickSet())
 	{
 		server.sendError(client.getFd(), ERR_NONICKNAMEGIVEN, ":Nickname must be provided before USER");
+		Logger::error("Nickname must be provided before USER");
 		return;
 	}
 	client.setUsername(params[0]);
@@ -246,9 +234,9 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 	{
 		client.setRegistered(true);
 		welcomeClient(client);
-		std::cout << GRE << "Client " << client.getFd() << " registered with username '" << params[0] << "' and real name '" << params[3] << "'" << std::endl;
+		Logger::connection("registered with user");
 	}
 	else
-		std::cout << "Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS)." << std::endl;
+		Logger::error("Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS).");
 
 }
