@@ -53,6 +53,9 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 		case CMD_PING:
 			handlePing(client, params);
 			break;
+		case CMD_PRIVMSG:
+			handlePrivmsg(client, params);
+			break;
 		default:
 			sendToClient(client,
 				":" + server.getServerName() + " " + ERR_UNKNOWNCOMMAND + " " +
@@ -238,5 +241,16 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 	}
 	else
 		Logger::error("Client provided USER, but is not yet authenticated or has no nickname (waiting for NICK/PASS).");
+
+}
+
+void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& params)
+{
+	if (params.size() > 2)
+	{
+		Logger::error("Not enough parameters");
+		return ;
+	}
+	std::cout<< client.getFd();
 
 }
