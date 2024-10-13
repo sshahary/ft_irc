@@ -17,6 +17,7 @@ enum CommandType
 	CMD_INVITE,
 	CMD_KICK,
 	CMD_TOPIC,
+	CMD_MODE,
 	CMD_PRIVMSG,
 	CMD_UNKNOWN
 };
@@ -29,6 +30,8 @@ class IrcCommands
 
 		void ircCommandsDispatcher(Client& client, const std::string& message);
 		void sendToClient(const Client& client, const std::string& message);
+		void broadcastMessage(const std::string& message, Client* sender, IrcCommands& ircCommands);
+
 
 	private:
 		Server& server;
@@ -45,6 +48,7 @@ class IrcCommands
     	void handleInvite(Client& client, const std::vector<std::string>& params);
     	void handleKick(Client& client, const std::vector<std::string>& params);
 		void handleTopic(Client& client, const std::vector<std::string>& params);
+		void handleMode(Client& client, const std::vector<std::string>& params);
 };
 
 #endif

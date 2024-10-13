@@ -46,6 +46,7 @@ class Server
     	void 		removeChannel(const std::string& channelName);
 
 		void 		sendRawMessage(int clientFd, const std::string& message);
+		
 
 
 	private:
