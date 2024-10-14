@@ -54,6 +54,24 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 		case CMD_PING:
 			handlePing(client, params);
 			break;
+		case CMD_JOIN:
+			handleJoin(client, params);
+			break;
+		case CMD_INVITE:
+			handleInvite(client, params);
+			break;
+		case CMD_KICK:
+			handleKick(client, params);
+			break;
+		case CMD_TOPIC:
+			handleTopic(client, params);
+			break;
+		case CMD_MODE:
+			handleMode(client, params);
+			break;
+		case CMD_PRIVMSG:
+			handlePrivmsg(client, params);
+			break;
 		default:
 			sendToClient(client,
 				":" + server.getServerName() + " " + ERR_UNKNOWNCOMMAND + " " +
@@ -102,8 +120,8 @@ int IrcCommands::getCommandType(const std::string& command)
 		return CMD_TOPIC;
 	if (command == "MODE")
 		return CMD_MODE;
-	// if (command == "PRIVMSG")
-	// 	return CMD_PRIVMSG;
+	if (command == "PRIVMSG")
+		return CMD_PRIVMSG;
 	return CMD_UNKNOWN;
 }
 
@@ -252,75 +270,83 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& params)
 {
-	if (params.size() > 2)
+	if (params.size() < 2 || params.empty())
 	{
-		Logger::error("Not enough parameters");
+		server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
+		Logger::error("No text to send");
 		return ;
 	}
-	std::cout<< client.getFd();
+	
 
 }
 
-void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params) {
-    if (!client.isRegistered()) {
-        sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n"); // ERR_NOTREGISTERED
-        return;
-    }
+void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params)
+{
+	if (!client.isRegistered())
+	{
+		sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n"); // ERR_NOTREGISTERED
+		return;
+	}
 
-    if (params.empty()) {
-        sendToClient(client, ":ircserv 461 " + client.getNickname() + " JOIN :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
-        return;
-    }
+	if (params.empty()) {
+		sendToClient(client, ":ircserv 461 " + client.getNickname() + " JOIN :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
+		return;
+	}
 
-    std::string channelName = params[0];
-    Channel* channel = server.getChannel(channelName);
+	std::string channelName = params[0];
+	Channel* channel = server.getChannel(channelName);
 
-    if (!channel) {
-        // Create the channel if it doesn't exist
-        channel = new Channel(channelName);
-        server.addChannel(channel);
-    } else {
-        // Check if the client is already in the channel
-        if (channel->isClient(&client)) {
-            sendToClient(client, ":ircserv 443 " + client.getNickname() + " " + channelName + " :You're already in that channel\r\n"); // ERR_USERONCHANNEL
-            return;
-        }
-        // Invite-only check
-        if (channel->isInviteOnly() && !channel->isInvited(&client)) {
-            sendToClient(client, ":ircserv 473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i) - you must be invited\r\n"); // ERR_INVITEONLYCHAN
-            return;
-        }
-        // Channel full check
-        if (channel->isFull()) {
-            sendToClient(client, ":ircserv 471 " + client.getNickname() + " " + channelName + " :Cannot join channel (+l) - channel is full\r\n"); // ERR_CHANNELISFULL
-            return;
-        }
-    }
+	if (!channel)
+	{
+		// Create the channel if it doesn't exist
+		channel = new Channel(channelName);
+		server.addChannel(channel);
+	}
+	else
+	{
+		// Check if the client is already in the channel
+		if (channel->isClient(&client))
+		{
+			sendToClient(client, ":ircserv 443 " + client.getNickname() + " " + channelName + " :You're already in that channel\r\n"); // ERR_USERONCHANNEL
+			return;
+		}
+		// Invite-only check
+		if (channel->isInviteOnly() && !channel->isInvited(&client))
+		{
+			sendToClient(client, ":ircserv 473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i) - you must be invited\r\n"); // ERR_INVITEONLYCHAN
+			return;
+		}
+		// Channel full check
+		if (channel->isFull()) {
+			sendToClient(client, ":ircserv 471 " + client.getNickname() + " " + channelName + " :Cannot join channel (+l) - channel is full\r\n"); // ERR_CHANNELISFULL
+			return;
+		}
+	}
 
-    // Add the client to the channel
-    channel->addClient(&client);
+	// Add the client to the channel
+	channel->addClient(&client);
 
-    // Broadcast the JOIN message to all members of the channel
-    std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n";
+	// Broadcast the JOIN message to all members of the channel
+	std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n";
 	sendToClient(client, joinMessage);
-    channel->broadcastMessage(joinMessage, nullptr);
+	channel->broadcastMessage(joinMessage, nullptr);
 
-    // Topic information
-    if (channel->hasTopic()) {
-        std::string topicMessage = ":" + server.getServerName() + " 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
-        sendToClient(client, topicMessage); // RPL_TOPIC
-    } else {
-        std::string noTopicMessage = ":" + server.getServerName() + " 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n";
-        sendToClient(client, noTopicMessage); // RPL_NOTOPIC
-    }
+	// Topic information
+	if (channel->hasTopic()) {
+		std::string topicMessage = ":" + server.getServerName() + " 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+		sendToClient(client, topicMessage); // RPL_TOPIC
+	} else {
+		std::string noTopicMessage = ":" + server.getServerName() + " 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n";
+		sendToClient(client, noTopicMessage); // RPL_NOTOPIC
+	}
 
-    // NAMES list
-    std::string namesMessage = ":" + server.getServerName() + " 353 " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + "\r\n";
-    sendToClient(client, namesMessage); // RPL_NAMREPLY
+	// NAMES list
+	std::string namesMessage = ":" + server.getServerName() + " 353 " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + "\r\n";
+	sendToClient(client, namesMessage); // RPL_NAMREPLY
 
-    // End of NAMES list
-    std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
-    sendToClient(client, endOfNamesMessage); // RPL_ENDOFNAMES
+	// End of NAMES list
+	std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
+	sendToClient(client, endOfNamesMessage); // RPL_ENDOFNAMES
 
 	// std::cout << "Client " << client.getFd() << " joining channel: " << channelName << std::endl;
 	// std::cout << "Broadcasting JOIN message to channel members." << std::endl;
@@ -329,277 +355,219 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
 
 }
 
-// void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
-//     if (!client.isRegistered()) {
-//         sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered" + CRLF);
-//         return;
-//     }
-
-//     if (params.size() < 2) {
-//         sendToClient(client, ":ircserv 461 " + client.getNickname() + " INVITE :Not enough parameters" + CRLF);
-//         return;
-//     }
-
-//     std::string nickname = params[0];
-//     std::string channelName = params[1];
-
-//     // Check if the target client exists
-//     Client* targetClient = server.getClientByNickname(nickname);
-//     if (!targetClient) {
-//         sendToClient(client, ":ircserv 401 " + client.getNickname() + " " + nickname + " :No such nick/channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the channel exists
-//     Channel* channel = server.getChannel(channelName);
-//     if (!channel) {
-//         sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the client is a member of the channel
-//     if (!channel->isMember(&client)) {
-//         sendToClient(client, ":ircserv 442 " + client.getNickname() + " " + channelName + " :You're not on that channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the target client is already in the channel
-//     if (channel->isClient(targetClient)) {
-//         sendToClient(client, ":ircserv 443 " + client.getNickname() + " " + nickname + " " + channelName + " :User is already on that channel" + CRLF);
-//         return;
-//     }
-
-//     // Invite the target client
-//     channel->addInvite(targetClient);
-
-//     // Notify the inviting client that the invite was sent
-//     std::string inviteConfirmation = ":ircserv 341 " + client.getNickname() + " " + nickname + " " + channelName + CRLF;
-//     sendToClient(client, inviteConfirmation);
-
-//     // Send the invite message to the target client
-//     std::string inviteMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " INVITE " + nickname + " :" + channelName + CRLF;
-//     sendToClient(*targetClient, inviteMessage);
-// }
-
-
 void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
-    if (!client.isRegistered()) {
-        server.sendError(client.getFd(), "451", ":You have not registered\r\n"); // ERR_NOTREGISTERED
-        return;
-    }
+	if (!client.isRegistered()) {
+		server.sendError(client.getFd(), "451", ":You have not registered\r\n"); // ERR_NOTREGISTERED
+		return;
+	}
 
-    if (params.size() < 2) {
-        server.sendError(client.getFd(), "461", "INVITE :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
-        return;
-    }
+	if (params.size() < 2) {
+		server.sendError(client.getFd(), "461", "INVITE :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
+		return;
+	}
 
-    std::string nickname = params[0];
-    std::string channelName = params[1];
+	std::string nickname = params[0];
+	std::string channelName = params[1];
 
-    // Check if the channel exists
-    Channel* channel = server.getChannel(channelName);
-    if (!channel) {
-        server.sendError(client.getFd(), "403", channelName + " :No such channel\r\n"); // ERR_NOSUCHCHANNEL
-        return;
-    }
+	// Check if the channel exists
+	Channel* channel = server.getChannel(channelName);
+	if (!channel) {
+		server.sendError(client.getFd(), "403", channelName + " :No such channel\r\n"); // ERR_NOSUCHCHANNEL
+		return;
+	}
 
-    // Check if the client is an operator in the channel
-    if (!channel->isOperator(&client)) {
-        server.sendError(client.getFd(), "482", channelName + " :You're not a channel operator\r\n"); // ERR_CHANOPRIVSNEEDED
-        return;
-    }
+	// Check if the client is an operator in the channel
+	if (!channel->isOperator(&client)) {
+		server.sendError(client.getFd(), "482", channelName + " :You're not a channel operator\r\n"); // ERR_CHANOPRIVSNEEDED
+		return;
+	}
 
-    // Check if the target user exists
-    Client* targetClient = server.getClientByNickname(nickname);
-    if (!targetClient) {
-        server.sendError(client.getFd(), "401", nickname + " :No such nick/channel\r\n"); // ERR_NOSUCHNICK
-        return;
-    }
+	// Check if the target user exists
+	Client* targetClient = server.getClientByNickname(nickname);
+	if (!targetClient) {
+		server.sendError(client.getFd(), "401", nickname + " :No such nick/channel\r\n"); // ERR_NOSUCHNICK
+		return;
+	}
 
-    // Check if the inviter is already a member of the channel
-    if (!channel->isMember(&client)) {
-        server.sendError(client.getFd(), "442", channelName + " :You're not on that channel\r\n"); // ERR_NOTONCHANNEL
-        return;
-    }
+	// Check if the inviter is already a member of the channel
+	if (!channel->isMember(&client)) {
+		server.sendError(client.getFd(), "442", channelName + " :You're not on that channel\r\n"); // ERR_NOTONCHANNEL
+		return;
+	}
 
-    // Invite the target client
-    channel->addInvite(targetClient);
+	// Invite the target client
+	channel->addInvite(targetClient);
 
-    // Notify the invited user
-    std::string inviteMessage = ":" + client.getNickname() + " INVITE " + targetClient->getNickname() + " :" + channelName + "\r\n";
-    sendToClient(*targetClient, inviteMessage);
+	// Notify the invited user
+	std::string inviteMessage = ":" + client.getNickname() + " INVITE " + targetClient->getNickname() + " :" + channelName + "\r\n";
+	sendToClient(*targetClient, inviteMessage);
 
-    // Notify the inviter of the successful invite
-    std::string successMessage = ":" + server.getServerName() + " 341 " + client.getNickname() + " " + targetClient->getNickname() + " " + channelName + "\r\n";
-    sendToClient(client, successMessage); // RPL_INVITING
+	// Notify the inviter of the successful invite
+	std::string successMessage = ":" + server.getServerName() + " 341 " + client.getNickname() + " " + targetClient->getNickname() + " " + channelName + "\r\n";
+	sendToClient(client, successMessage); // RPL_INVITING
 }
-
-
 
 void IrcCommands::handleKick(Client& client, const std::vector<std::string>& params) {
-    // KICK <channel> <user> [<comment>]
+	// KICK <channel> <user> [<comment>]
 
-    // 1. Registration Check
-    if (!client.isRegistered()) {
-        server.sendTargetError(client.getFd(), ERR_NOTREGISTERED, client.getNickname(), "You have not registered" + std::string(CRLF));
-        return;
-    }
+	// 1. Registration Check
+	if (!client.isRegistered()) {
+		server.sendTargetError(client.getFd(), ERR_NOTREGISTERED, client.getNickname(), "You have not registered" + std::string(CRLF));
+		return;
+	}
 
-    // 2. Parameter Validation
-    if (params.size() < 2) {
-        server.sendTargetError(client.getFd(), ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters" + std::string(CRLF));
-        return;
-    }
+	// 2. Parameter Validation
+	if (params.size() < 2) {
+		server.sendTargetError(client.getFd(), ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters" + std::string(CRLF));
+		return;
+	}
 
-    std::string channelName = params[0];
-    std::string targetNickname = params[1];
-    std::string comment = (params.size() >= 3) ? params[2] : "No comment";
+	std::string channelName = params[0];
+	std::string targetNickname = params[1];
+	std::string comment = (params.size() >= 3) ? params[2] : "No comment";
 
-    // 3. Channel Validation
-    Channel* channel = server.getChannel(channelName);
-    if (!channel) {
-        server.sendTargetError(client.getFd(), ERR_NOSUCHCHANNEL, channelName, "No such channel" + std::string(CRLF));
-        return;
-    }
+	// 3. Channel Validation
+	Channel* channel = server.getChannel(channelName);
+	if (!channel) {
+		server.sendTargetError(client.getFd(), ERR_NOSUCHCHANNEL, channelName, "No such channel" + std::string(CRLF));
+		return;
+	}
 
-    // 4. Client Membership Check
-    if (!channel->isMember(&client)) {
-        server.sendTargetError(client.getFd(), "442", channelName, "You're not on that channel" + std::string(CRLF));
-        return;
-    }
+	// 4. Client Membership Check
+	if (!channel->isMember(&client)) {
+		server.sendTargetError(client.getFd(), "442", channelName, "You're not on that channel" + std::string(CRLF));
+		return;
+	}
 
-    // 5. Target User Validation
-    Client* targetClient = server.getClientByNickname(targetNickname);
-    if (!targetClient) {
-        server.sendTargetError(client.getFd(), "401", targetNickname, "No such nick/channel" + std::string(CRLF));
-        return;
-    }
+	// 5. Target User Validation
+	Client* targetClient = server.getClientByNickname(targetNickname);
+	if (!targetClient) {
+		server.sendTargetError(client.getFd(), "401", targetNickname, "No such nick/channel" + std::string(CRLF));
+		return;
+	}
 
-    if (!channel->isMember(targetClient)) {
-        server.sendTargetError(client.getFd(), ERR_USERONCHANNEL, channelName, targetNickname + " :They are not on that channel" + std::string(CRLF));
-        return;
-    }
+	if (!channel->isMember(targetClient)) {
+		server.sendTargetError(client.getFd(), ERR_USERONCHANNEL, channelName, targetNickname + " :They are not on that channel" + std::string(CRLF));
+		return;
+	}
 
-    // 6. Permission Check (Optional)
-    // If implementing operator permissions, uncomment the following:
-    if (!channel->isOperator(&client)) {
-        server.sendTargetError(client.getFd(), "482", channelName, "You're not channel operator" + std::string(CRLF));
-        return;
-    }
+	// 6. Permission Check (Optional)
+	// If implementing operator permissions, uncomment the following:
+	if (!channel->isOperator(&client)) {
+		server.sendTargetError(client.getFd(), "482", channelName, "You're not channel operator" + std::string(CRLF));
+		return;
+	}
 
 
-    // 7. Perform the Kick
-    channel->removeMember(targetClient);
+	// 7. Perform the Kick
+	channel->removeMember(targetClient);
 
-    // 8. Broadcast the Kick
-    std::stringstream kickMessageStream;
-    kickMessageStream << ":" << client.getNickname() << "!user@" << "hostname"
-                      << " KICK " << channelName << " " << targetNickname
-                      << " :" << comment << CRLF;
-    std::string kickMessage = kickMessageStream.str();
-    channel->broadcast(kickMessage, &client);
+	// 8. Broadcast the Kick
+	std::stringstream kickMessageStream;
+	kickMessageStream << ":" << client.getNickname() << "!user@" << "hostname"
+					  << " KICK " << channelName << " " << targetNickname
+					  << " :" << comment << CRLF;
+	std::string kickMessage = kickMessageStream.str();
+	channel->broadcast(kickMessage, &client);
 
-    // 9. Notify the Kicked User
-    server.sendRawMessage(targetClient->getFd(), kickMessage);
+	// 9. Notify the Kicked User
+	server.sendRawMessage(targetClient->getFd(), kickMessage);
 }
 
-
 void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& params) {
-    if (!client.isRegistered()) {
-        sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n");
-        return;
-    }
+	if (!client.isRegistered()) {
+		sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n");
+		return;
+	}
 
-    if (params.size() < 1) {
-        sendToClient(client, ":ircserv 461 " + client.getNickname() + " TOPIC :Not enough parameters\r\n");
-        return;
-    }
+	if (params.size() < 1) {
+		sendToClient(client, ":ircserv 461 " + client.getNickname() + " TOPIC :Not enough parameters\r\n");
+		return;
+	}
 
-    std::string channelName = params[0];
-    Channel* channel = server.getChannel(channelName);
+	std::string channelName = params[0];
+	Channel* channel = server.getChannel(channelName);
 
-    if (!channel) {
-        sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel\r\n");
-        return;
-    }
+	if (!channel) {
+		sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
 
-    if (params.size() == 1) { // View topic
-        if (channel->hasTopic()) {
-            sendToClient(client, ":ircserv 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n");
-        } else {
-            sendToClient(client, ":ircserv 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n");
-        }
-    } else { // Change topic
-        if (channel->isTopicRestricted() && !channel->isOperator(&client)) {
-            sendToClient(client, ":ircserv 482 " + client.getNickname() + " " + channelName + " :You're not a channel operator\r\n");
-        } else {
-            std::string newTopic = params[1];
-            channel->setTopic(newTopic);
-            channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " TOPIC " + channelName + " :" + newTopic + "\r\n", &client);
-        }
-    }
+	if (params.size() == 1) { // View topic
+		if (channel->hasTopic()) {
+			sendToClient(client, ":ircserv 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		} else {
+			sendToClient(client, ":ircserv 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n");
+		}
+	} else { // Change topic
+		if (channel->isTopicRestricted() && !channel->isOperator(&client)) {
+			sendToClient(client, ":ircserv 482 " + client.getNickname() + " " + channelName + " :You're not a channel operator\r\n");
+		} else {
+			std::string newTopic = params[1];
+			channel->setTopic(newTopic);
+			channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " TOPIC " + channelName + " :" + newTopic + "\r\n", &client);
+		}
+	}
 }
 
 void IrcCommands::handleMode(Client& client, const std::vector<std::string>& params) {
-    if (!client.isRegistered()) {
-        sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n");
-        return;
-    }
+	if (!client.isRegistered()) {
+		sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n");
+		return;
+	}
 
-    if (params.size() < 2) {
-        sendToClient(client, ":ircserv 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
-        return;
-    }
+	if (params.size() < 2) {
+		sendToClient(client, ":ircserv 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
+		return;
+	}
 
-    std::string channelName = params[0];
-    Channel* channel = server.getChannel(channelName);
+	std::string channelName = params[0];
+	Channel* channel = server.getChannel(channelName);
 
-    if (!channel) {
-        sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel\r\n");
-        return;
-    }
+	if (!channel) {
+		sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
 
-    std::string modeFlags = params[1];
-    bool adding = true; // true for adding modes, false for removing
-    for (char mode : modeFlags) {
-        switch (mode) {
-            case '+': adding = true; break;
-            case '-': adding = false; break;
-            case 'i': channel->setInviteOnly(adding); break;
-            case 't': channel->setTopicRestricted(adding); break;
-            case 'k':
-                if (adding && params.size() > 2) {
-                    channel->setKey(params[2]);
-                } else {
-                    channel->removeKey();
-                }
-                break;
-            case 'o':
-                if (adding && params.size() > 2) {
-                    Client* target = server.getClientByNickname(params[2]);
-                    if (target) {
-                        channel->addOperator(target);
-                    }
-                } else {
-                    Client* target = server.getClientByNickname(params[2]);
-                    if (target) {
-                        channel->removeOperator(target);
-                    }
-                }
-                break;
-            case 'l':
-                if (adding && params.size() > 2) {
-                    channel->setUserLimit(std::stoi(params[2]));
-                } else {
-                    channel->removeUserLimit();
-                }
-                break;
-            default:
-                sendToClient(client, ":ircserv 472 " + client.getNickname() + " " + mode + " :is unknown mode char to me\r\n");
-                return;
-        }
-    }
-    channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " MODE " + channelName + " :" + modeFlags + "\r\n", &client);
+	std::string modeFlags = params[1];
+	bool adding = true; // true for adding modes, false for removing
+	for (char mode : modeFlags) {
+		switch (mode) {
+			case '+': adding = true; break;
+			case '-': adding = false; break;
+			case 'i': channel->setInviteOnly(adding); break;
+			case 't': channel->setTopicRestricted(adding); break;
+			case 'k':
+				if (adding && params.size() > 2) {
+					channel->setKey(params[2]);
+				} else {
+					channel->removeKey();
+				}
+				break;
+			case 'o':
+				if (adding && params.size() > 2) {
+					Client* target = server.getClientByNickname(params[2]);
+					if (target) {
+						channel->addOperator(target);
+					}
+				} else {
+					Client* target = server.getClientByNickname(params[2]);
+					if (target) {
+						channel->removeOperator(target);
+					}
+				}
+				break;
+			case 'l':
+				if (adding && params.size() > 2) {
+					channel->setUserLimit(std::stoi(params[2]));
+				} else {
+					channel->removeUserLimit();
+				}
+				break;
+			default:
+				sendToClient(client, ":ircserv 472 " + client.getNickname() + " " + mode + " :is unknown mode char to me\r\n");
+				return;
+		}
+	}
+	channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " MODE " + channelName + " :" + modeFlags + "\r\n", &client);
 }
-
-

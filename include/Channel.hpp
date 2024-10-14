@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
+/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:57:58 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/13 15:46:09 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/14 11:04:39 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,70 +28,70 @@ class Client;
 class IrcCommands;
 class Channel {
 public:
-    Channel(const std::string& name);
-    ~Channel();
+	Channel(const std::string& name);
+	~Channel();
 
-    void addClient(Client* client);
-    void removeClient(Client* client);
-    // void broadcastMessage(const std::string& message, Client* sender);
-    void setOperator(Client* client, bool status);
-    bool isOperator(Client* client) const;
-    bool isClient(Client* client) const;
-    void sendNamesList(Client* client,Server& server);
+	void addClient(Client* client);
+	void removeClient(Client* client);
+	// void broadcastMessage(const std::string& message, Client* sender);
+	void setOperator(Client* client, bool status);
+	bool isOperator(Client* client) const;
+	bool isClient(Client* client) const;
+	void sendNamesList(Client* client,Server& server);
 
-    // Methods for channel modes and properties
-    bool isEmpty() const;
-    bool isMember(const Client* client) const;
+	// Methods for channel modes and properties
+	bool isEmpty() const;
+	bool isMember(const Client* client) const;
 
-    void broadcastMessage(const std::string& message, Client* sender);
+	void broadcastMessage(const std::string& message, Client* sender);
 
-    bool hasTopic() const;
-    void setTopic(const std::string& topic);
-    std::string getTopic() const;
-    bool isInviteOnly() const;
-    bool hasKey() const;
-    std::string getKey() const;
-    bool isFull() const;
-    bool isBanned(Client* client) const;
-    bool isInvited(Client* client) const;
-    const std::string& getName() const;
+	bool hasTopic() const;
+	void setTopic(const std::string& topic);
+	std::string getTopic() const;
+	bool isInviteOnly() const;
+	bool hasKey() const;
+	std::string getKey() const;
+	bool isFull() const;
+	bool isBanned(Client* client) const;
+	bool isInvited(Client* client) const;
+	const std::string& getName() const;
 
-    // Mode management
-    void setInviteOnly(bool status);
-    
+	// Mode management
+	void setInviteOnly(bool status);
+	
 
-    void setTopicRestricted(bool status);
-    bool isTopicRestricted() const;
+	void setTopicRestricted(bool status);
+	bool isTopicRestricted() const;
 
-    void setKey(const std::string& key);
-    void removeKey();
-    
-    void setUserLimit(int limit);
-    void removeUserLimit();
-    bool hasUserLimit() const;
-    int getUserLimit() const;
-    void addInvite(Client* client);
-    std::string getMemberNames() const;
-    void removeMember(Client* client);
-    void broadcast(const std::string& message, Client* sender);
+	void setKey(const std::string& key);
+	void removeKey();
+	
+	void setUserLimit(int limit);
+	void removeUserLimit();
+	bool hasUserLimit() const;
+	int getUserLimit() const;
+	void addInvite(Client* client);
+	std::string getMemberNames() const;
+	void removeMember(Client* client);
+	void broadcast(const std::string& message, Client* sender);
 
 
-    void addOperator(Client* client);
-    void removeOperator(Client* client);
-    
+	void addOperator(Client* client);
+	void removeOperator(Client* client);
+	
 
 private:
-    std::string _name;
-    std::map<int, Client*> _clients;
-    std::string _topic;
-    // Channel modes and properties
-    bool _inviteOnly;
-    std::string _key;
-    int _userLimit;
-    std::set<std::string> _bannedClients;
-    std::set<Client*> _invitedClients;
-    bool _topicRestricted;
-    std::set<int> _operators; // Store operator client FDs
+	std::string _name;
+	std::map<int, Client*> _clients;
+	std::string _topic;
+	// Channel modes and properties
+	bool _inviteOnly;
+	std::string _key;
+	int _userLimit;
+	std::set<std::string> _bannedClients;
+	std::set<Client*> _invitedClients;
+	bool _topicRestricted;
+	std::set<int> _operators; // Store operator client FDs
 };
 
 #endif
@@ -117,7 +117,7 @@ private:
 //     void setTopic(const std::string& topic);
 
 //      void addClient(Client* client); 
-     
+	 
 //     bool isMember(const Client& client) const;
 //     bool isClient(const Client* client) const;
 
@@ -131,7 +131,7 @@ private:
 //     void broadcast(const std::string& message, const Client* sender) const;
 
 //     std::string getMemberNames() const;
-    
+	
 //     bool isOperator(const Client& client) const;
 //     void addOperator(Client& client);
 //     void removeOperator(const Client& client);
