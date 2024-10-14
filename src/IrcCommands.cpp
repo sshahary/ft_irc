@@ -289,6 +289,8 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
     }
 
     std::string channelName = params[0];
+    std::string channelKey = (params.size() > 1) ? params[1] : ""; // Assign key if provided
+
     Channel* channel = server.getChannel(channelName);
 
     if (!channel) {
@@ -311,6 +313,11 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
             sendToClient(client, ":ircserv 471 " + client.getNickname() + " " + channelName + " :Cannot join channel (+l) - channel is full\r\n"); // ERR_CHANNELISFULL
             return;
         }
+        // Key check
+        if (channel->hasKey() && channel->getKey() != channelKey) {
+            sendToClient(client, ":ircserv 475 " + client.getNickname() + " " + channelName + " :Cannot join channel (+k) - incorrect channel key\r\n"); // ERR_BADCHANNELKEY
+            return;
+        }
     }
 
     // Add the client to the channel
@@ -318,7 +325,6 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
 
     // Broadcast the JOIN message to all members of the channel
     std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n";
-	sendToClient(client, joinMessage);
     channel->broadcastMessage(joinMessage, nullptr);
 
     // Topic information
@@ -337,13 +343,76 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
     // End of NAMES list
     std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
     sendToClient(client, endOfNamesMessage); // RPL_ENDOFNAMES
-
-	// std::cout << "Client " << client.getFd() << " joining channel: " << channelName << std::endl;
-	// std::cout << "Broadcasting JOIN message to channel members." << std::endl;
-	// std::cout << "Sending NAMES list for channel: " << channelName << std::endl;
-	// std::cout << "End of NAMES list message sent for channel: " << channelName << std::endl;
-
 }
+
+
+// void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params) {
+//     if (!client.isRegistered()) {
+//         sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered\r\n"); // ERR_NOTREGISTERED
+//         return;
+//     }
+
+//     if (params.empty()) {
+//         sendToClient(client, ":ircserv 461 " + client.getNickname() + " JOIN :Not enough parameters\r\n"); // ERR_NEEDMOREPARAMS
+//         return;
+//     }
+
+//     std::string channelName = params[0];
+//     Channel* channel = server.getChannel(channelName);
+
+//     if (!channel) {
+//         // Create the channel if it doesn't exist
+//         channel = new Channel(channelName);
+//         server.addChannel(channel);
+//     } else {
+//         // Check if the client is already in the channel
+//         if (channel->isClient(&client)) {
+//             sendToClient(client, ":ircserv 443 " + client.getNickname() + " " + channelName + " :You're already in that channel\r\n"); // ERR_USERONCHANNEL
+//             return;
+//         }
+//         // Invite-only check
+//         if (channel->isInviteOnly() && !channel->isInvited(&client)) {
+//             sendToClient(client, ":ircserv 473 " + client.getNickname() + " " + channelName + " :Cannot join channel (+i) - you must be invited\r\n"); // ERR_INVITEONLYCHAN
+//             return;
+//         }
+//         // Channel full check
+//         if (channel->isFull()) {
+//             sendToClient(client, ":ircserv 471 " + client.getNickname() + " " + channelName + " :Cannot join channel (+l) - channel is full\r\n"); // ERR_CHANNELISFULL
+//             return;
+//         }
+//         // Key check
+//         if (channel->hasKey() && channel->getKey() != channelKey) {
+//             sendToClient(client, ":ircserv 475 " + client.getNickname() + " " + channelName + " :Cannot join channel (+k) - incorrect channel key\r\n"); // ERR_BADCHANNELKEY
+//             return;
+//         }
+//     }
+
+//     // Add the client to the channel
+//     channel->addClient(&client);
+
+//     // Broadcast the JOIN message to all members of the channel
+//     std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n";
+// 	sendToClient(client, joinMessage);
+//     channel->broadcastMessage(joinMessage, nullptr);
+
+//     // Topic information
+//     if (channel->hasTopic()) {
+//         std::string topicMessage = ":" + server.getServerName() + " 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+//         sendToClient(client, topicMessage); // RPL_TOPIC
+//     } else {
+//         std::string noTopicMessage = ":" + server.getServerName() + " 331 " + client.getNickname() + " " + channelName + " :No topic is set\r\n";
+//         sendToClient(client, noTopicMessage); // RPL_NOTOPIC
+//     }
+
+//     // NAMES list
+//     std::string namesMessage = ":" + server.getServerName() + " 353 " + client.getNickname() + " = " + channelName + " :" + channel->getMemberNames() + "\r\n";
+//     sendToClient(client, namesMessage); // RPL_NAMREPLY
+
+//     // End of NAMES list
+//     std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
+//     sendToClient(client, endOfNamesMessage); // RPL_ENDOFNAMES
+
+// }
 
 // void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
 //     if (!client.isRegistered()) {
@@ -516,7 +585,7 @@ void IrcCommands::handleKick(Client& client, const std::vector<std::string>& par
     channel->broadcast(kickMessage, &client);
 
     // 9. Notify the Kicked User
-    server.sendRawMessage(targetClient->getFd(), kickMessage);
+     server.sendRawMessage(targetClient->getFd(), kickMessage);
 }
 
 
