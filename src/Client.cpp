@@ -64,3 +64,36 @@ void Client::setHostname(const std::string& newHostname) { hostname = newHostnam
 void Client::setAuthenticated(bool isAuthenticated) { authenticated = isAuthenticated; }
 void Client::setRegistered(bool isRegistered) { registered = isRegistered; }
 void Client::setNickSet(bool isNickSet) { nickSet = isNickSet;}
+
+
+void Client::sendRawMessage(const std::string& message) {
+    if (clientFd != -1) {
+        ssize_t bytesSent = send(clientFd, message.c_str(), message.size(), 0);
+        if (bytesSent == -1) {
+            // Log or handle the error appropriately
+            perror("Failed to send message to client");
+        }
+    }
+}
+
+void Client::sendToClient(const std::string& message) const {
+    send(clientFd, message.c_str(), message.length(), 0);
+}
+
+
+
+// void Channel::sendNamesList(Client* client, Server& server) {
+//     std::string names;
+//     for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+//         Client* channelClient = it->second;
+//         if (isOperator(channelClient)) {
+//             names += "@";
+//         }
+//         names += channelClient->getNickname() + " ";
+//     }
+
+//     std::string prefix = ":" + server.getHostname() + " ";
+//     std::string channelSymbol = "="; // For public channels
+//     client->sendMessage(prefix + "353 " + client->getNickname() + " " + channelSymbol + " " + _name + " :" + names + "\r\n"); // RPL_NAMREPLY
+//     client->sendMessage(prefix + "366 " + client->getNickname() + " " + _name + " :End of /NAMES list\r\n"); // RPL_ENDOFNAMES
+// }
