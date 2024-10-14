@@ -273,25 +273,29 @@ void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& 
 	if (params.size() < 2 || params.empty())
 	{
 		server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
-		Logger::error("No text to send");
+		Logger::error("PRIVMSG: No text to send");
 		return ;
 	}
 	std::string recipient = params[0];
 	std::string message = params[1];
+	for (size_t i = 2; i < params.size(); ++i)
+	{
+		message += " " + params[i];  // Combine all remaining parts of the message with spaces
+	}
 
 	if (recipient[0] == '#')
 	{
 		if (!server.isChannel(recipient))
 		{
 			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such channel");
-			Logger::error("No such channel");
+			Logger::error("PRIVMSG: No such channel '" + recipient + "'");
 			return ;
 		}
 		Channel* channel = server.getChannel(recipient);
 		if (!channel->isMember(&client))
 		{
 			server.sendError(client.getFd(), ERR_CANNOTSENDTOCHAN, recipient + " :Cannot send to channel");
-			Logger::error("Cannot send to channel");
+			Logger::error("PRIVMSG: Client is not a member of channel '" + recipient + "'");
 			return ;
 		}
 		channel->broadcastMessage(":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF, &client);
@@ -302,7 +306,7 @@ void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& 
 		if (!targetClient)
 		{
 			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such nickname");
-			Logger::error("No such nickname");
+			Logger::error("PRIVMSG: No such nickname '" + recipient + "'");
 			return ;
 		}
 		sendToClient(*targetClient, ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF);
