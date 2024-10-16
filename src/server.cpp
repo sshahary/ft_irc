@@ -314,3 +314,8 @@ void Server::removeNickname(const std::string& nickname)
 {
     nickToFd.erase(nickname);
 }
+
+bool Server::isChannel(const std::string& channelName)
+{
+	return channels.find(channelName) != channels.end();
+}

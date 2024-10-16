@@ -44,9 +44,10 @@ class IrcCommands
 		void handlePass(Client& client, const std::vector<std::string>& params);
 		void handleNick(Client& client, const std::vector<std::string>& params);
 		void handleUser(Client& client, const std::vector<std::string>& params);
+		void handlePrivmsg(Client& client, const std::vector<std::string>& params);
 		void handleJoin(Client& client, const std::vector<std::string>& params);
-    	void handleInvite(Client& client, const std::vector<std::string>& params);
-    	void handleKick(Client& client, const std::vector<std::string>& params);
+		void handleInvite(Client& client, const std::vector<std::string>& params);
+		void handleKick(Client& client, const std::vector<std::string>& params);
 		void handleTopic(Client& client, const std::vector<std::string>& params);
 		void handleMode(Client& client, const std::vector<std::string>& params);
 		void handleMessage(Client& client, const std::vector<std::string>& params);

@@ -26,6 +26,13 @@ const size_t MAX_NICKNAME_LENGTH = 9;
 const std::string ERR_ERRONEUSNICKNAME = "432";
 const std::string ERR_NICKNAMEINUSE = "433";
 
+// PRIVMSG
+
+const std::string ERR_NORECIPIENT = "411";
+const std::string ERR_NOTEXTTOSEND = "412";
+const std::string ERR_CANNOTSENDTOCHAN = "404";
+const std::string ERR_NOSUCHNICK = "401";
+
 
 #define ERR_PASSWDMISMATCH "464"
 #define ERR_NOTREGISTERED "451"

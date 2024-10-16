@@ -35,15 +35,16 @@ class Server
 		void		sendTargetError(int clientFd, const std::string& errorCode, const std::string& target, const std::string& message);
 
 		// Client Management
-    	Client* getClient(int fd);
-    	Client* getClientByNickname(const std::string& nickname);
-    	void 		addNickname(const std::string& nickname, int fd);
-    	void 		removeNickname(const std::string& nickname);
+		Client* getClient(int fd);
+		Client* getClientByNickname(const std::string& nickname);
+		void 		addNickname(const std::string& nickname, int fd);
+		void 		removeNickname(const std::string& nickname);
 
-    	// Channel Management
-    	Channel* getChannel(const std::string& channelName);
-    	void 		addChannel(Channel* channel);
-    	void 		removeChannel(const std::string& channelName);
+		// Channel Management
+		bool		isChannel(const std::string& channelName);
+		Channel*	getChannel(const std::string& channelName);
+		void 		addChannel(Channel* channel);
+		void 		removeChannel(const std::string& channelName);
 
 		void 		sendRawMessage(int clientFd, const std::string& message);
 		
