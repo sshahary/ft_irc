@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
+/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:57:58 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/14 11:04:39 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/10/16 19:18:11 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ public:
 	int getUserLimit() const;
 	void addInvite(Client* client);
 	std::string getMemberNames() const;
+	bool checkKey(const std::string& key) const;
 	void removeMember(Client* client);
 	void broadcast(const std::string& message, Client* sender);
 

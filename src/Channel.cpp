@@ -6,7 +6,7 @@
 /*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/16 15:58:34 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/16 19:18:21 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,9 @@ void Channel::broadcastMessage(const std::string& message, Client* sender) {
     }
 }
 
+bool Channel::checkKey(const std::string& key) const {
+    return key == _key; // Compare provided key with stored key
+}
 
 
 bool Channel::isOperator(Client* client) const
