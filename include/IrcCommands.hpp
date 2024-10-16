@@ -50,6 +50,7 @@ class IrcCommands
 		void handleKick(Client& client, const std::vector<std::string>& params);
 		void handleTopic(Client& client, const std::vector<std::string>& params);
 		void handleMode(Client& client, const std::vector<std::string>& params);
+		void handleMessage(Client& client, const std::vector<std::string>& params);
 };
 
 #endif

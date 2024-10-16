@@ -6,7 +6,7 @@
 /*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/14 10:49:47 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/10/16 11:19:47 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,17 +30,6 @@ void Channel::addClient(Client* client)
 		setOperator(client, true);
 	}
 }
-
-// void Channel::addClient(Client* client, const std::string& serverHostname) {
-//     _clients[client->getFd()] = client;
-//     // Optionally set the first client as operator
-//     std::cout << "Client added to channel " << _name << " on server " << serverHostname << std::endl;
-//     if (_clients.size() == 1) {
-//         setOperator(client, true);
-//     }
-//     // Remove client from invite list if present
-//     _invitedClients.erase(client->getNickname());
-// }
 
 void Channel::removeClient(Client* client) {
 	_clients.erase(client->getFd());
@@ -92,17 +81,14 @@ std::string Channel::getMemberNames() const
 }
 
 
-void Channel::broadcastMessage(const std::string& message, Client* sender)
-{
-	std::cout << "From broadcastMessage Function: " << std::endl;
-	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		if (it->second != sender)
-		{
-			// Replace 'sendRawMessage' with the actual message sending function name
-			it->second->sendToClient(message);  // Use the correct method here
-		}
-	}
+void Channel::broadcastMessage(const std::string& message, Client* sender) {
+    std::cout << "From broadcastMessage Function: " << std::endl;
+    for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if (it->second != sender) {
+            // Replace 'sendRawMessage' with the actual message sending function name
+            it->second->sendToClient(message);  // Use the correct method here
+        }
+    }
 }
 
 
@@ -171,10 +157,6 @@ bool Channel::isBanned(Client* client) const
 	// You can implement ban logic as needed
 	return _bannedClients.find(client->getNickname()) != _bannedClients.end();
 }
-
-// bool Channel::isInvited(Client* client) const {
-//     return _invitedClients.find(client->getNickname()) != _invitedClients.end();
-// }
 
 bool Channel::isInvited(Client* client) const
 {
