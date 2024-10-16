@@ -69,6 +69,9 @@ void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& messa
 		case CMD_MODE:
 			handleMode(client, params);
 			break;
+		case CMD_PRIVMSG:
+			handlePrivmsg(client, params);
+			break;
 		default:
 			sendToClient(client,
 				":" + server.getServerName() + " " + ERR_UNKNOWNCOMMAND + " " +
@@ -308,7 +311,6 @@ void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& 
 		}
 		sendToClient(*targetClient, ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF);
 	}
-
 }
 
 void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params)
