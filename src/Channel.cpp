@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
+/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/16 11:19:47 by sshahary         ###   ########.fr       */
+/*   Updated: 2024/10/16 15:58:34 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,6 @@ std::string Channel::getMemberNames() const
 
 
 void Channel::broadcastMessage(const std::string& message, Client* sender) {
-    std::cout << "From broadcastMessage Function: " << std::endl;
     for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
         if (it->second != sender) {
             // Replace 'sendRawMessage' with the actual message sending function name

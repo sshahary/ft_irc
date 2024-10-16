@@ -157,19 +157,7 @@ void Server::processClientData(int clientFd)
 		Logger::chat("Client <" + Logger::intToString(clientFd) + "> sent: " + buffer);
 		std::string message(buffer);
 		ircCommands.ircCommandsDispatcher(clients[clientFd], message);
-		// Find the client associated with this fd
-        Client& client = clients[clientFd];
-		// Check if the client is in any channel
-        for (auto& channelPair : channels) {
-            Channel* channel = channelPair.second;
-            if (channel->isClient(&client)) {
-                // Broadcast the message to all clients in the channel
-                std::string broadcastMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " " + message + "\r\n";
-                channel->broadcastMessage(broadcastMessage, &client);
-                break;
-            }
 	}
-}
 }
 
 // Method to remove a client from the server's lists

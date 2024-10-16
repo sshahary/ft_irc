@@ -375,65 +375,7 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
     // End of NAMES list
     std::string endOfNamesMessage = ":" + server.getServerName() + " 366 " + client.getNickname() + " " + channelName + " :End of /NAMES list\r\n";
     sendToClient(client, endOfNamesMessage); // RPL_ENDOFNAMES
-
-	// std::cout << "Client " << client.getFd() << " joining channel: " << channelName << std::endl;
-	// std::cout << "Broadcasting JOIN message to channel members." << std::endl;
-	// std::cout << "Sending NAMES list for channel: " << channelName << std::endl;
-	// std::cout << "End of NAMES list message sent for channel: " << channelName << std::endl;
-
 }
-
-// void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
-//     if (!client.isRegistered()) {
-//         sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered" + CRLF);
-//         return;
-//     }
-
-//     if (params.size() < 2) {
-//         sendToClient(client, ":ircserv 461 " + client.getNickname() + " INVITE :Not enough parameters" + CRLF);
-//         return;
-//     }
-
-//     std::string nickname = params[0];
-//     std::string channelName = params[1];
-
-//     // Check if the target client exists
-//     Client* targetClient = server.getClientByNickname(nickname);
-//     if (!targetClient) {
-//         sendToClient(client, ":ircserv 401 " + client.getNickname() + " " + nickname + " :No such nick/channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the channel exists
-//     Channel* channel = server.getChannel(channelName);
-//     if (!channel) {
-//         sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the client is a member of the channel
-//     if (!channel->isMember(&client)) {
-//         sendToClient(client, ":ircserv 442 " + client.getNickname() + " " + channelName + " :You're not on that channel" + CRLF);
-//         return;
-//     }
-
-//     // Check if the target client is already in the channel
-//     if (channel->isClient(targetClient)) {
-//         sendToClient(client, ":ircserv 443 " + client.getNickname() + " " + nickname + " " + channelName + " :User is already on that channel" + CRLF);
-//         return;
-//     }
-
-//     // Invite the target client
-//     channel->addInvite(targetClient);
-
-//     // Notify the inviting client that the invite was sent
-//     std::string inviteConfirmation = ":ircserv 341 " + client.getNickname() + " " + nickname + " " + channelName + CRLF;
-//     sendToClient(client, inviteConfirmation);
-
-//     // Send the invite message to the target client
-//     std::string inviteMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " INVITE " + nickname + " :" + channelName + CRLF;
-//     sendToClient(*targetClient, inviteMessage);
-// }
 
 
 void IrcCommands::handleInvite(Client& client, const std::vector<std::string>& params) {
