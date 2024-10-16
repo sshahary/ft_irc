@@ -55,6 +55,7 @@ class Server
 		void		acceptNewClient();				// Accept new client connection
 		void		processClientData(int clientFd);	// Receive data from a client
 		void		removeClient(int clientFd);		// Remove client from the list
+		void		processClientBuffer(int clientFd);
 
 		int								serverSocket;			// Server socket file descriptor
 		bool							isRunning;				// Flag to control server loop

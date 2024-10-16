@@ -10,9 +10,11 @@ _____________________________________________________________________________*/
 
 Client::Client(int fd) : clientFd(fd) {} */
 
-Client::Client() : clientFd(-1), authenticated(false), registered(false), nickSet(false){}
+Client::Client() : inputBuffer(""), clientFd(-1), authenticated(false), registered(false), nickSet(false) {}
 
-Client::Client(int fd) : clientFd(fd), authenticated(false), registered(false), nickSet(false){}
+Client::Client(int fd) : inputBuffer(""), clientFd(fd), authenticated(false), registered(false), nickSet(false) {}
+
+// Client::Client(int fd) : clientFd(fd), authenticated(false), registered(false), nickSet(false){}
 
 Client::~Client() {}
 

@@ -138,7 +138,7 @@ void Server::acceptNewClient()
 }
 
 // Receive data from a connected client
-void Server::processClientData(int clientFd)
+/* void Server::processClientData(int clientFd)
 {
 	char	buffer[1024];
 
@@ -157,6 +157,48 @@ void Server::processClientData(int clientFd)
 		Logger::chat("Client <" + Logger::intToString(clientFd) + "> sent: " + buffer);
 		std::string message(buffer);
 		ircCommands.ircCommandsDispatcher(clients[clientFd], message);
+	}
+} */
+
+void Server::processClientData(int clientFd)
+{
+	char buffer[1024];
+	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+	
+	if (bytesReceived <= 0)
+	{
+		Logger::connection("Client disconnected: " + Logger::intToString(clientFd));
+		removeClient(clientFd);
+		close(clientFd);
+		return;
+	}
+
+	buffer[bytesReceived] = '\0';
+	clients[clientFd].inputBuffer += std::string(buffer, bytesReceived);
+
+	processClientBuffer(clientFd);
+}
+
+void Server::processClientBuffer(int clientFd)
+{
+	Client& client = clients[clientFd];
+	size_t pos;
+
+	while ((pos = client.inputBuffer.find('\n')) != std::string::npos)
+	{
+		std::string command = client.inputBuffer.substr(0, pos);
+		
+		// Remove '\r' if present (for \r\n line endings)
+		if (!command.empty() && command[command.length() - 1] == '\r')
+			command.erase(command.length() - 1);
+
+		Logger::chat("Client <" + Logger::intToString(clientFd) + "> sent: " + command);
+		
+		// Process the complete command
+		ircCommands.ircCommandsDispatcher(client, command);
+
+		// Remove the processed command from the buffer
+		client.inputBuffer.erase(0, pos + 1);
 	}
 }
 
