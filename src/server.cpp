@@ -53,7 +53,7 @@ void Server::stop()
 	}
 }
 
-void Server::start()
+/* void Server::start()
 {
 	createSocket();
 	while (isRunning)
@@ -65,6 +65,37 @@ void Server::start()
 				break;
 			else
 				throw IrcException("Polling error");
+		}
+		for (size_t i = 0; i < pollFds.size(); ++i)
+		{
+			if (pollFds[i].revents & POLLIN)
+			{
+				if (pollFds[i].fd == serverSocket)
+					acceptNewClient();
+				else
+					processClientData(pollFds[i].fd);
+			}
+		}
+	}
+} */
+
+void Server::start()
+{
+	createSocket();
+	while (isRunning)
+	{
+		int pollStatus = poll(&pollFds[0], pollFds.size(), -1);
+		if (pollStatus == -1)
+		{
+			if (!isRunning)  // Check if we're stopping due to a signal
+			{
+				Logger::info("Server stopping due to received signal");
+				break;
+			}
+			else
+			{
+				throw IrcException("Polling error");
+			}
 		}
 		for (size_t i = 0; i < pollFds.size(); ++i)
 		{
