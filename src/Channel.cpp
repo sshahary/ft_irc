@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
+/*   By: musenov <musenov@student.42heilbronn.de    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/16 19:18:21 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/19 14:41:46 by musenov          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,16 +82,16 @@ std::string Channel::getMemberNames() const
 
 
 void Channel::broadcastMessage(const std::string& message, Client* sender) {
-    for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if (it->second != sender) {
-            // Replace 'sendRawMessage' with the actual message sending function name
-            it->second->sendToClient(message);  // Use the correct method here
-        }
-    }
+	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		if (it->second != sender) {
+			// Replace 'sendRawMessage' with the actual message sending function name
+			it->second->sendToClient(message);  // Use the correct method here
+		}
+	}
 }
 
 bool Channel::checkKey(const std::string& key) const {
-    return key == _key; // Compare provided key with stored key
+	return key == _key; // Compare provided key with stored key
 }
 
 

@@ -69,15 +69,15 @@ void Client::setNickSet(bool isNickSet) { nickSet = isNickSet;}
 
 
 void Client::sendRawMessage(const std::string& message) {
-    if (clientFd != -1) {
-        ssize_t bytesSent = send(clientFd, message.c_str(), message.size(), 0);
-        if (bytesSent == -1) {
-            // Log or handle the error appropriately
-            perror("Failed to send message to client");
-        }
-    }
+	if (clientFd != -1) {
+		ssize_t bytesSent = send(clientFd, message.c_str(), message.size(), 0);
+		if (bytesSent == -1) {
+			// Log or handle the error appropriately
+			perror("Failed to send message to client");
+		}
+	}
 }
 
 void Client::sendToClient(const std::string& message) const {
-    send(clientFd, message.c_str(), message.length(), 0);
+	send(clientFd, message.c_str(), message.length(), 0);
 }
