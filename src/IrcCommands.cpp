@@ -24,10 +24,26 @@ IrcCommands::~IrcCommands() {}
 _____________________________________________________________________________*/
 
 
+std::string normalizeLineEndings(const std::string& message) {
+    std::string normalizedMessage = message;
+    size_t pos = 0;
+    while ((pos = normalizedMessage.find("\n", pos)) != std::string::npos) {
+        if (pos == 0 || normalizedMessage[pos - 1] != '\r') {
+            normalizedMessage.replace(pos, 1, "\r\n");
+        }
+        pos += 2; // Move past the new \r\n
+    }
+    return normalizedMessage;
+}
+
+
+
 void IrcCommands::ircCommandsDispatcher(Client& client, const std::string& message)
 {
+	std::string normalizedMessage = normalizeLineEndings(message);
+
 	// Split the incoming message into command and parameters
-	std::vector<std::string> messageParts = splitMessage(message);
+	std::vector<std::string> messageParts = splitMessage(normalizedMessage);
 	// If the message is empty after splitting, return without processing
 	if (messageParts.empty())
 		return;
@@ -270,48 +286,66 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& params)
 {
-	if (params.size() < 2 || params.empty())
-	{
-		server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
-		Logger::error("PRIVMSG: No text to send");
-		return ;
-	}
-	std::string recipient = params[0];
-	std::string message = params[1];
-	for (size_t i = 2; i < params.size(); ++i)
-	{
-		message += " " + params[i];  // Combine all remaining parts of the message with spaces
-	}
+    if (params.empty() || params.size() < 2)
+    {
+        server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
+        Logger::error("PRIVMSG: No text to send");
+        return;
+    }
 
-	if (recipient[0] == '#')
-	{
-		if (!server.isChannel(recipient))
-		{
-			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such channel");
-			Logger::error("PRIVMSG: No such channel '" + recipient + "'");
-			return ;
-		}
-		Channel* channel = server.getChannel(recipient);
-		if (!channel->isMember(&client))
-		{
-			server.sendError(client.getFd(), ERR_CANNOTSENDTOCHAN, recipient + " :Cannot send to channel");
-			Logger::error("PRIVMSG: Client is not a member of channel '" + recipient + "'");
-			return ;
-		}
-		channel->broadcastMessage(":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF, &client);
-	}
-	else
-	{
-		Client* targetClient = server.getClientByNickname(recipient);
-		if (!targetClient)
-		{
-			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such nickname");
-			Logger::error("PRIVMSG: No such nickname '" + recipient + "'");
-			return ;
-		}
-		sendToClient(*targetClient, ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF);
-	}
+    Logger::info("Received PRIVMSG command with params: " + params[0] + " " + params[1]);
+
+    std::string recipient = params[0];
+    std::string message;
+
+    // Combine all remaining parts of the message into a single string
+    for (size_t i = 1; i < params.size(); ++i)
+    {
+        if (i > 1) message += " ";  // Add space between message parts
+        message += params[i];
+    }
+
+    // Check if the recipient is a valid channel or nickname
+    if (recipient[0] == '#' || server.isChannel(recipient))  // Handle both cases for channel names with/without #
+    {
+        Channel* channel = server.getChannel(recipient);
+
+        if (!channel)
+        {
+            server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such channel");
+            Logger::error("PRIVMSG: No such channel '" + recipient + "'");
+            return;
+        }
+
+        if (!channel->isMember(&client))
+        {
+            server.sendError(client.getFd(), ERR_CANNOTSENDTOCHAN, recipient + " :Cannot send to channel");
+            Logger::error("PRIVMSG: Client is not a member of channel '" + recipient + "'");
+            return;
+        }
+
+        // Broadcast the message to all members of the channel, except the sender
+        std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
+        channel->broadcastMessage(fullMessage, &client);
+    }
+    else
+    {
+        Client* targetClient = server.getClientByNickname(recipient);
+        if (!targetClient)
+        {
+            server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such nickname");
+            Logger::error("PRIVMSG: No such nickname '" + recipient + "'");
+            return;
+        }
+
+        // Send the message to the target client
+        std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
+        sendToClient(*targetClient, fullMessage);
+    }
 }
+
+
+
 
 void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& params)
 {
@@ -363,7 +397,7 @@ void IrcCommands::handleJoin(Client& client, const std::vector<std::string>& par
 	channel->addClient(&client);
 
 	// Broadcast the JOIN message to all members of the channel
-	std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + CRLF;
+	std::string joinMessage = ":" + client.getNickname() + "!" + client.getUsername() + client.getHostname() + " JOIN :" + channelName + CRLF;
 	sendToClient(client, joinMessage);
 	channel->broadcastMessage(joinMessage, nullptr);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: musenov <musenov@student.42heilbronn.de    +#+  +:+       +#+        */
+/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/19 14:41:46 by musenov          ###   ########.fr       */
+/*   Updated: 2024/10/19 18:58:59 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,10 @@
 #include <set>
 #include <sstream>
 #include "IrcCommands.hpp" 
+#include "Logger.hpp"  
+#include "Client.hpp"  
+
+
 
 Channel::Channel(const std::string& name)
 	: _name(name),_topic(""), _inviteOnly(false), _key(""), _userLimit(-1), _topicRestricted(false) {}
@@ -71,13 +75,18 @@ const std::string& Channel::getName() const{ return _name;}
 
 std::string Channel::getMemberNames() const
 {
-	std::ostringstream names;
-	for (std::map<int, Client*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		names << it->second->getNickname() << " ";
-	}
-	// ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " JOIN :" + channelName + "\r\n"
-	return names.str();
+    std::ostringstream names;
+    for (std::map<int, Client*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+		Client* client = it->second;
+        // Check if the client is an operator
+        if (isOperator(client)) {
+            names << "@" << it->second->getNickname() << " ";  // Add @ for operators
+        } else {
+            names << it->second->getNickname() << " ";         // Regular clients without @
+        }
+    }
+    return names.str();
 }
 
 
