@@ -6,7 +6,7 @@
 /*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/16 19:18:21 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/16 19:59:48 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void Channel::broadcast(const std::string& message, Client* sender) {
 	}
 }
 
-const std::string& Channel::getName() const{ return _name;}
+const std::string& Channel::getName() const{ return _name;}0
 
 std::string Channel::getMemberNames() const
 {
