@@ -1,308 +1,110 @@
+#include "Server.hpp"
+#include "Client.hpp"
+#include "Config.hpp"
+#include "Logger.hpp"
+#include "IrcException.hpp"
+#include "IrcCommands.hpp"
 
-#include "server.hpp"
+/*_____________________________________________________________________________
+								ORTHODOX CANONICAL FORM
+_____________________________________________________________________________*/
 
-// ============ Client - orthodox canonical form ==============================
-
-Client::Client() : clientFd(-1), ipAddress(""), nickname(""), authenticated(0), registered(0) {}
-
-Client::Client(int fd, const std::string &ipAddress)			//sshahary
-	: clientFd(fd), ipAddress(ipAddress), nickname("") {}
-// Client class implementation ================================================
-
-int Client::getFd() const { return clientFd; }
-
-void Client::setFd(int fd) { clientFd = fd; }
-
-std::string Client::getIpAddress() const { return ipAddress; }
-
-void Client::setIpAddress(const std::string &ip) { ipAddress = ip; }
-
-//sshahary
-
-std::string Client::getNickname() const { return nickname; }
-
-void Client::setNickname(const std::string &nick) { nickname = nick; }
-
-// ============ Server - orthodox canonical form ==============================
-
-// Server::Server(int port) : serverPort(port), serverFd(-1), isRunning(true) {}
-Server::Server(int port, const std::string &password) : serverPort(port), 
-														serverPassword(password), 
-														serverFd(-1), 
-														isRunning(true)
+Server::Server(const Config &config) :	serverSocket(-1),
+										isRunning(true),
+										config(config),
+										serverName("ircserv"),
+										ircCommands(*this)
 {
-	std::cout << "Server created with port: " << serverPort << " and password: " << serverPassword << std::endl;
+	Logger::info( "Server created with port: " + \
+				Logger::intToString(config.getPort()) + \
+				" and password: " + config.getPassword() );
 }
 
-Server::~Server() {stop();}
+Server::~Server() {}
 
-// Server class implementation ================================================
+/*_____________________________________________________________________________
+								CORE FUNCTIONS
+_____________________________________________________________________________*/
 
-// Method to close all client connections and the server socket fd
-void Server::closeAllConnections()
+void Server::stop()
 {
-	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		std::cout << RED << "Closing connection with client: " << clients[i].getFd() << WHI << std::endl;
-		close(clients[i].getFd());
-	}
-	if (serverFd != -1)
-	{
-		std::cout << RED << "Shutting down server: " << serverFd << WHI << std::endl;
-		close(serverFd);
-	}
-}
-
-// Method to remove a client from the server's lists
-void Server::removeClient(int clientFd)
-{
-	// Find and remove the client from the nickname tracking
-	Client* client = findClientByFd(clientFd);
-	if (client)
-	{
-		if (!client->getNickname().empty())
-			removeNicknameTracking(client->getNickname());
-	}
-	for (size_t i = 0; i < pollFds.size(); ++i)
-	{
-		if (pollFds[i].fd == clientFd)
-		{
-			pollFds.erase(pollFds.begin() + i);
-			break;
-		}
-	}
-	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		if (clients[i].getFd() == clientFd)
-		{
-			clients.erase(clients.begin() + i);
-			break;
-		}
-	}
-	close(clientFd);
-}
-
-
-// void Server::receiveData(int clientFd)
-// {
-// 	char buffer[1024];
-// 	memset(buffer, 0, sizeof(buffer));
-
-// 	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-// 	if (bytesReceived <= 0)
-// 	{
-// 		std::cout << "Client disconnected: " << clientFd << std::endl;
-// 		removeClient(clientFd);
-// 		return;
-// 	}
-
-// 	buffer[bytesReceived] = '\0';
-// 	std::cout << "Client <" << clientFd << "> sent: " << buffer << std::endl;
-
-// 	Client* client = findClientByFd(clientFd);
-// 	if (client == nullptr)
-// 	{
-// 		std::cout << "Client not found: " << clientFd << std::endl;
-// 		return;
-// 	}
-
-// 	std::string command;
-// 	std::vector<std::string> params;
-// 	std::istringstream iss(buffer);
-// 	iss >> command;
-
-// 	std::string param;
-// 	while (iss >> param)
-// 		params.push_back(param);
-
-// 	// Handle commands
-// 	if (command == "PASS")
-// 		handlePassCommand(clientFd, params);
-// 	else if (command == "NICK")
-// 		handleNickCommand(clientFd, params);
-// 	else if (command == "USER")
-// 		handleUserCommand(clientFd, params);
-// 	else
-// 		sendError(clientFd, "ERR_UNKNOWNCOMMAND", "Unknown command or not implemented");
-// }
-
-// Receive data from a connected client
-// void Server::receiveData(int clientFd)
-// {
-// 	char	buffer[1024];
-
-// 	memset(buffer, 0, sizeof(buffer));
-// 	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-// 	if (bytesReceived <= 0)
-// 	{
-// 		std::cout << RED << "Client disconnected: " << clientFd << WHI << std::endl;
-// 		removeClient(clientFd);
-// 		close(clientFd);
-// 	}
-// 	buffer[bytesReceived] = '\0';
-// 	std::cout << YEL << "Client <" << clientFd << "> sent: " << WHI << buffer << std::endl;
-// 	// process received data
-// 	 // Find the client and check if they are authenticated
-// 	Client* client = findClientByFd(clientFd);
-// 	if (client == NULL)
-// 	{
-// 		std::cout << "Client not found: " << clientFd << std::endl;
-// 		return;
-// 	}
-// 	std::string command;
-// 	std::vector<std::string> params;
-// 	std::istringstream iss(buffer);
-// 	iss >> command;
-// 	std::string param;
-// 	while (iss >> param)
-// 		params.push_back(param);
-// 	// Handle commands
-// 	 // Handle the parsed command
-// 	if (command == "PASS")
-// 		handlePassCommand(clientFd, params);
-// 	else if (command == "NICK")
-// 		handleNickCommand(clientFd, params);
-// 	else if (command == "USER")
-// 		handleUserCommand(clientFd, params);
-// 	else if (command == "JOIN")
-// 		handleJoinCommand(clientFd, params);
-// 	else if (command == "KICK")
-// 		handleKickCommand(clientFd, params);
-// 	else
-// 		sendError(clientFd, "421", "Unknown command or not implemented");
-// 	// else if (command == "PART")
-// 	// 	handlePartCommand(clientFd, params);
-// 	// else if (command == "PRIVMSG")
-// 	// 	handlePrivmsgCommand(clientFd, params);
-// 	// else if (command == "QUIT")
-// 	// 	handleQuitCommand(clientFd, params);
-// 	std::string response = ""; // Placeholder response
-// 	if (send(clientFd, response.c_str(), response.length(), 0) == -1)
-// 	{
-// 		std::cout << "send() error: " << strerror(errno) << std::endl;
-// 	}
-
-// }
-
-std::vector<std::string> Server::splitMessageIntoParts(const std::string& message)
-{
-	std::vector<std::string> parts;
-	std::istringstream iss(message);
-	std::string part;
+	isRunning = false;
 	
-	// Split the message by spaces
-	while (iss >> part) {
-		parts.push_back(part);
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		int clientFd = it->first; // Key (file descriptor) of the map entry
+		Logger::connection("Closing connection with client: " + \
+		Logger::intToString(clientFd));
+		close(clientFd); // Close the client socket
 	}
-	
-	return parts;
+
+	for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		delete it->second;
+	}
+	channels.clear();
+
+	if (serverSocket != -1)
+	{
+		Logger::info("Shutting down the server: " + \
+		Logger::intToString(serverSocket));
+		close(serverSocket); // Close the server socket
+	}
 }
 
-
-void Server::handleClientMessage(int clientFd, const std::string& message)
+/* void Server::start()
 {
-	std::vector<std::string> params = splitMessageIntoParts(message);
 
-	// The first element should be the command
-	std::string command = params[0];
-	params.erase(params.begin());
-
-	// Handling commands
-	if (command == "JOIN")
-		handleJoinCommand(clientFd, params);
-	else if (command == "KICK")
-		handleKickCommand(clientFd, params);
-	else if (command == "PASS")
-		handlePassCommand(clientFd, params);
-	else if (command == "NICK")
-		handleNickCommand(clientFd, params);
-	else if (command == "USER")
-		handleUserCommand(clientFd, params);
-	else
-		sendError(clientFd, "421", command + " :Unknown command");
-}
-
-void Server::receiveData(int clientFd)
-{
-	char buffer[1024];
-	memset(buffer, 0, sizeof(buffer));
-
-	// Receive data from the client
-	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-	if (bytesReceived <= 0)
-	{
-		std::cout << "Client disconnected: " << clientFd << std::endl;
-		removeClient(clientFd);
-		return;
-	}
-
-	// Null-terminate the buffer to ensure it's a valid C string
-	buffer[bytesReceived] = '\0';
-	std::cout << "Client <" << clientFd << "> sent: " << buffer << std::endl;
-
-	// Find the client
-	Client* client = findClientByFd(clientFd);
-	if (client == nullptr)
-	{
-		std::cout << "Client not found: " << clientFd << std::endl;
-		return;
-	}
-
-	// Handle the client's message using handleClientMessage
-	std::string message(buffer);
-	handleClientMessage(clientFd, message);
-}
-
-// Accept a new client connection
-void Server::acceptNewClient()
-{
-	Client				newClient;
-	struct sockaddr_in	clientAddress;
-	struct pollfd		clientPollFd;
-	
-	socklen_t clientLen = sizeof(clientAddress);
-
-	int clientFd = accept(serverFd, (struct sockaddr *)&clientAddress, &clientLen);
-	if (clientFd == -1)
-	{
-		std::cerr << "Failed to accept client connection" << std::endl;
-		return ;
-	}
-	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1)
-	{
-		std::cerr << "Failed to set non-blocking mode for client" << std::endl;
-		close(clientFd);
-		return ;
-	}
-
-	newClient.setFd(clientFd);
-	newClient.setIpAddress(inet_ntoa(clientAddress.sin_addr));
-	clients.push_back(newClient);
-
-	clientPollFd.fd = clientFd;
-	clientPollFd.events = POLLIN;
-	pollFds.push_back(clientPollFd);
-
-	std::cout << GRE << "Client connected: " << newClient.getIpAddress() << WHI << std::endl;
-}
-
-// Main server loop to wait for and handle connections
-void Server::waitForConnections()
-{
+	createSocket();
 	while (isRunning)
 	{
 		int pollStatus = poll(&pollFds[0], pollFds.size(), -1);
 		if (pollStatus == -1)
-			throw std::runtime_error("Polling error");
-
+		{
+			if (errno == EINTR)
+				break;
+			else
+				throw IrcException("Polling error");
+		}
 		for (size_t i = 0; i < pollFds.size(); ++i)
 		{
 			if (pollFds[i].revents & POLLIN)
 			{
-				if (pollFds[i].fd == serverFd)
+				if (pollFds[i].fd == serverSocket)
 					acceptNewClient();
 				else
-					receiveData(pollFds[i].fd);
+					processClientData(pollFds[i].fd);
+			}
+		}
+	}
+} */
+
+void Server::start()
+{
+	createSocket();
+	while (isRunning)
+	{
+		int pollStatus = poll(&pollFds[0], pollFds.size(), -1);
+		if (pollStatus == -1)
+		{
+			if (!isRunning)  // Check if we're stopping due to a signal
+			{
+				Logger::info("Server stopping due to received signal");
+				break;
+			}
+			else
+			{
+				throw IrcException("Polling error");
+			}
+		}
+		for (size_t i = 0; i < pollFds.size(); ++i)
+		{
+			if (pollFds[i].revents & POLLIN)
+			{
+				if (pollFds[i].fd == serverSocket)
+					acceptNewClient();
+				else
+					processClientData(pollFds[i].fd);
 			}
 		}
 	}
@@ -311,46 +113,247 @@ void Server::waitForConnections()
 // Create and bind server socket
 void Server::createSocket()
 {
-	serverFd = socket(AF_INET, SOCK_STREAM, 0);
+	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-	if (serverFd == -1)
-		throw std::runtime_error("Failed to create socket");
+	if (serverSocket == -1)
+		throw IrcException("Failed to create socket");
 
 	int opt = 1;
-	if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
-		throw std::runtime_error("Failed to set socket options");
+	if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+		throw IrcException("Failed to set socket options");
 
-	if (fcntl(serverFd, F_SETFL, O_NONBLOCK) == -1)
-		throw std::runtime_error("Failed to set non-blocking mode");
+	if (fcntl(serverSocket, F_SETFL, O_NONBLOCK) == -1)
+		throw IrcException("Failed to set non-blocking mode");
 
 	struct sockaddr_in serverAddress;
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	serverAddress.sin_port = htons(serverPort);
+	serverAddress.sin_port = htons(config.getPort());
 
-	if (bind(serverFd, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
-		throw std::runtime_error("Failed to bind server socket");
+	if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
+		throw IrcException("Failed to bind server socket");
 
-	if (listen(serverFd, SOMAXCONN) == -1)
-		throw std::runtime_error("Failed to listen on socket");
+	if (listen(serverSocket, SOMAXCONN) == -1)
+		throw IrcException("Failed to listen on socket");
 
 	struct pollfd serverPollFd;
-	serverPollFd.fd = serverFd;
+	serverPollFd.fd = serverSocket;
 	serverPollFd.events = POLLIN;
 	pollFds.push_back(serverPollFd);
 
-	std::cout << GRE << "Server listening on port " << serverPort << WHI << std::endl;
+	Logger::connection("Server listening on port " + Logger::intToString(config.getPort()));
 }
 
-void Server::start()
+void Server::acceptNewClient()
 {
-	createSocket();
-	waitForConnections();
+	struct sockaddr_in clientAddr;
+	pollfd clientPollFd;
+
+	socklen_t clientLen = sizeof(clientAddr);
+	int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLen);
+	if (clientSocket < 0) {
+		Logger::error("Failed to accept client connection");
+		return;
+	}
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK) == -1)
+	{
+		Logger::error("Failed to set non-blocking mode for client");
+		close(clientSocket);
+		return ;
+	}
+	clientPollFd.fd = clientSocket;
+	clientPollFd.events = POLLIN;
+	pollFds.push_back(clientPollFd);
+	clients[clientSocket] = Client(clientSocket);
+	Logger::info("New client connected: " + std::to_string(clientSocket));
 }
 
-void Server::stop()
+void Server::processClientData(int clientFd)
 {
-	isRunning = false;
-	closeAllConnections();
+	char buffer[1024];
+	ssize_t bytesReceived = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+	
+	if (bytesReceived <= 0)
+	{
+		Logger::connection("Client disconnected: " + Logger::intToString(clientFd));
+		removeClient(clientFd);
+		close(clientFd);
+		return;
+	}
+
+	buffer[bytesReceived] = '\0';
+	clients[clientFd].inputBuffer += std::string(buffer, bytesReceived);
+
+	processClientBuffer(clientFd);
 }
 
+void Server::processClientBuffer(int clientFd)
+{
+	Client& client = clients[clientFd];
+	size_t pos;
+
+	while ((pos = client.inputBuffer.find('\n')) != std::string::npos)
+	{
+		std::string command = client.inputBuffer.substr(0, pos);
+		
+		// Remove '\r' if present (for \r\n line endings)
+		if (!command.empty() && command[command.length() - 1] == '\r')
+			command.erase(command.length() - 1);
+
+		Logger::chat("Client <" + Logger::intToString(clientFd) + "> sent: " + command);
+		
+		// Process the complete command
+		ircCommands.ircCommandsDispatcher(client, command);
+
+		// Remove the processed command from the buffer
+		client.inputBuffer.erase(0, pos + 1);
+	}
+}
+
+// Method to remove a client from the server's lists
+void Server::removeClient(int clientFd)
+{
+	for (size_t i = 0; i < pollFds.size(); ++i)
+	{
+		if (pollFds[i].fd == clientFd)
+		{
+			pollFds.erase(pollFds.begin() + i);
+			break;
+		}
+	}
+	// Remove client from the std::map<int, Client>
+	std::map<int, Client>::iterator it = clients.find(clientFd);
+	if (it != clients.end()) 
+	{
+		// Remove nickname mapping if set
+		if (!it->second.getNickname().empty())
+		{
+			removeNickname(it->second.getNickname());
+		}
+		clients.erase(it); // Erase the client using the iterator
+	}
+}
+
+const std::string& Server::getServerName() const
+{
+	return serverName;
+}
+
+const std::string& Server::getPassword() const
+{
+	return config.getPassword();
+}
+
+const std::map<int, Client>& Server::get_clients() const
+{
+	return clients;
+}
+
+/*_____________________________________________________________________________
+								NICK COMMAND
+_____________________________________________________________________________*/
+
+
+bool Server::isNickInUse(const std::string& nickname)
+{
+	return nickToFd.find(nickname) != nickToFd.end();
+}
+
+void Server::updateNickname(Client& client, const std::string& oldNick, const std::string& newNick)
+{
+	if (!oldNick.empty())
+		nickToFd.erase(oldNick);
+	nickToFd[newNick] = client.getFd();
+}
+
+/*_____________________________________________________________________________
+								NEW MEMBER FUNCTIONS
+_____________________________________________________________________________*/
+
+// Function to send raw messages to clients
+void Server::sendRawMessage(int clientFd, const std::string& message)
+{
+	ssize_t totalSent = 0;
+	ssize_t messageLength = message.length();
+	const char* msg = message.c_str();
+
+	while (totalSent < messageLength)
+	{
+		ssize_t sent = send(clientFd, msg + totalSent, messageLength - totalSent, 0);
+		if (sent == -1)
+		{
+			Logger::error("Failed to send message to client FD " + Logger::intToString(clientFd));
+			break;
+		}
+		totalSent += sent;
+	}
+}
+
+// Function to retrieve a client by file descriptor
+Client* Server::getClient(int fd)
+{
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it != clients.end())
+	{
+		return &(it->second);
+	}
+	return NULL;
+}
+
+// Function to retrieve a channel by name
+Channel* Server::getChannel(const std::string& channelName)
+{
+	std::map<std::string, Channel*>::iterator it = channels.find(channelName);
+	if (it != channels.end())
+	{
+		return it->second;
+	}
+	return NULL;
+}
+
+// Function to add a channel
+void Server::addChannel(Channel* channel)
+{
+	if (channel)
+	{
+		channels[channel->getName()] = channel;
+		Logger::info("Channel created: " + channel->getName());
+	}
+}
+
+void Server::removeChannel(const std::string& channelName) {
+	std::map<std::string, Channel*>::iterator it = channels.find(channelName);
+	if (it != channels.end()) {
+		delete it->second;
+		channels.erase(it);
+		Logger::info("Channel removed: " + channelName);
+	}
+}
+
+// Function to retrieve a client by nickname
+Client* Server::getClientByNickname(const std::string& nickname)
+{
+	std::map<std::string, int>::iterator it = nickToFd.find(nickname);
+	if (it != nickToFd.end())
+	{
+		return getClient(it->second);
+	}
+	return NULL;
+}
+
+// Function to add a nickname
+void Server::addNickname(const std::string& nickname, int fd)
+{
+	nickToFd[nickname] = fd;
+}
+
+// Function to remove a nickname
+void Server::removeNickname(const std::string& nickname)
+{
+	nickToFd.erase(nickname);
+}
+
+bool Server::isChannel(const std::string& channelName)
+{
+	return channels.find(channelName) != channels.end();
+}

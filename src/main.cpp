@@ -1,47 +1,93 @@
-// Standard 42 header
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: musenov <musenov@student.42heilbronn.de    +#+  +:+       +#+        */
+/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/05 23:27:02 by musenov           #+#    #+#             */
-/*   Updated: 2024/09/06 00:47:24 by musenov          ###   ########.fr       */
+/*   Updated: 2024/10/12 17:54:17 by snagulap         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "server.hpp"
-#include <cstdlib>
+#include "Server.hpp"
+#include "Config.hpp"
+#include <signal.h>
+#include "Logger.hpp"
+
+Server *g_server = NULL;
+
+void signalHandler(int signum)
+{
+	if (g_server)
+	{
+		Logger::info("Signal received: " + Logger::intToString(signum));
+		g_server->stop();
+	}
+}
 
 int main(int argc, char **argv)
 {
 	if (argc != 3)
 	{
-		std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;
-		return 1;
+		Logger::error("Usage: ./ircserv <port> <password>");
+		return EXIT_FAILURE;
 	}
-
-	int	port = std::atoi(argv[1]);
-	if (port <= 0 || port > 65535)
-	{
-		std::cerr << "Invalid port number" << std::endl;
-		return 1;
-	}
-
-	std::string password = argv[2];
-	Server server(port, password);
-
 	try
 	{
+		Config config(std::atoi(argv[1]), argv[2]);
+		Server server(config);
+		g_server = &server;
+
+		signal(SIGINT, signalHandler);
+		signal(SIGQUIT, signalHandler);
+
 		server.start();
+
+		g_server = NULL;
 	}
+	// to catch not only IrcExceptions but also all possible ones
 	catch (const std::exception &e)
 	{
-		std::cerr << "Server error: " << e.what() << std::endl;
-		server.stop();
+		Logger::error(e.what());
+		return EXIT_FAILURE;
+	}
+	Logger::info("Server has shut down");
+	return EXIT_SUCCESS;
+}
+
+/* 
+try
+	{
+		Bureaucrat a("Cipolino", 0); // This should throw GradeTooHighException
+		std::cout << a << std::endl;
+	}
+	catch (const Bureaucrat::GradeTooHighException &e_high)
+	{
+		std::cout << e_high.what() << std::endl;
+	}
+	catch (const Bureaucrat::GradeTooLowException &e_low)
+	{
+		std::cout << e_low.what() << std::endl;
 	}
 
-	std::cout << "Server has shut down" << std::endl;
-	return 0;
+
+void	Bureaucrat::increment_grade()
+{
+	if (grade_ - 1 <= 0)
+		throw Bureaucrat::GradeTooHighException();
+	grade_--;
 }
+
+		class GradeTooHighException : public std::exception
+		{
+			public:
+				const char* what() const throw()
+				{
+					return "Grade too high";
+				}
+		};
+
+		
+ */
+

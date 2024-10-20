@@ -7,47 +7,35 @@ LDFLAGS				:= -std=c++17 -pedantic -g3
 HEADERS				:=	-I ./include
 
 ifdef leak_mac
-# fsanitize flag doesnt work w/ `system("leaks <executable>");`
+# fsanitize flag doesn't work with `system("leaks <executable>");`
 	CXXFLAGS		+= -g3 -fsanitize=address
 	LDFLAGS			+= -g3 -fsanitize=address
 	LDFLAGS			+= -L ../../LeakSanitizer -llsan -lc++ -Wno-gnu-include-next
 	HEADERS			+= -I ../../LeakSanitizer
 endif
 
-# build using `make re leak_docker=1` and then run <executable>
+# Build using `make re leak_docker=1` and then run <executable>
 ifdef leak_docker
 	CXXFLAGS		+= -g3 -fsanitize=address
 	LDFLAGS			+= -g3 -fsanitize=address
 endif
 
-SRC_DIR				:= ./src/
-CMD_SRC_DIR			:= commands/
+SRC_DIR				:= ./src
+OBJ_DIR				:= ./obj
 
-SRCS				:=	main.cpp \
-						server.cpp \
-						$(CMD_SRC_DIR)commands.cpp \
-						$(CMD_SRC_DIR)messages.cpp \
-						$(CMD_SRC_DIR)authenticated.cpp \
-						$(CMD_SRC_DIR)channel.cpp \
-						$(CMD_SRC_DIR)join.cpp \
-						$(CMD_SRC_DIR)kick.cpp \
-
-
-OBJ_DIR				:= ./obj/
-CMD_DIR				:= $(OBJ_DIR)commands
-
-OBJS				:= $(addprefix $(OBJ_DIR), $(SRCS:.cpp=.o))
+# Collect all .cpp files in src/ and subdirectories
+SRCS				:= $(shell find $(SRC_DIR) -name '*.cpp')
+# Replace src/ with obj/ and .cpp with .o for object files
+OBJS				:= $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 
 all:				$(NAME)
 
-$(NAME):			$(OBJ_DIR) $(OBJS)
-	$(CXX) $(OBJS) -o $(NAME) $(LDFLAGS) && echo "Compilation of $(NAME) is successful"
+$(NAME):			$(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) -o $(NAME) && echo "Compilation of $(NAME) is successful"
 
-$(OBJ_DIR):
-	@mkdir -p $(OBJ_DIR)
-	@mkdir -p $(CMD_DIR)
-
-$(OBJ_DIR)%.o:		$(SRC_DIR)%.cpp
+# Rule to compile .cpp files into .o files
+$(OBJ_DIR)/%.o:		$(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(HEADERS) -c $< -o $@
 
 clean:
