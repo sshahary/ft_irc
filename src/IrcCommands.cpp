@@ -25,15 +25,15 @@ _____________________________________________________________________________*/
 
 
 std::string normalizeLineEndings(const std::string& message) {
-    std::string normalizedMessage = message;
-    size_t pos = 0;
-    while ((pos = normalizedMessage.find("\n", pos)) != std::string::npos) {
-        if (pos == 0 || normalizedMessage[pos - 1] != '\r') {
-            normalizedMessage.replace(pos, 1, "\r\n");
-        }
-        pos += 2; // Move past the new \r\n
-    }
-    return normalizedMessage;
+	std::string normalizedMessage = message;
+	size_t pos = 0;
+	while ((pos = normalizedMessage.find("\n", pos)) != std::string::npos) {
+		if (pos == 0 || normalizedMessage[pos - 1] != '\r') {
+			normalizedMessage.replace(pos, 1, "\r\n");
+		}
+		pos += 2; // Move past the new \r\n
+	}
+	return normalizedMessage;
 }
 
 
@@ -286,62 +286,62 @@ void IrcCommands::handleUser(Client& client, const std::vector<std::string>& par
 
 void IrcCommands::handlePrivmsg(Client& client, const std::vector<std::string>& params)
 {
-    if (params.empty() || params.size() < 2)
-    {
-        server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
-        Logger::error("PRIVMSG: No text to send");
-        return;
-    }
+	if (params.empty() || params.size() < 2)
+	{
+		server.sendError(client.getFd(), ERR_NOTEXTTOSEND, ":No text to send");
+		Logger::error("PRIVMSG: No text to send");
+		return;
+	}
 
-    Logger::info("Received PRIVMSG command with params: " + params[0] + " " + params[1]);
+	Logger::info("Received PRIVMSG command with params: " + params[0] + " " + params[1]);
 
-    std::string recipient = params[0];
-    std::string message;
+	std::string recipient = params[0];
+	std::string message;
 
-    // Combine all remaining parts of the message into a single string
-    for (size_t i = 1; i < params.size(); ++i)
-    {
-        if (i > 1) message += " ";  // Add space between message parts
-        message += params[i];
-    }
+	// Combine all remaining parts of the message into a single string
+	for (size_t i = 1; i < params.size(); ++i)
+	{
+		if (i > 1) message += " ";  // Add space between message parts
+		message += params[i];
+	}
 
-    // Check if the recipient is a valid channel or nickname
-    if (recipient[0] == '#' || server.isChannel(recipient))  // Handle both cases for channel names with/without #
-    {
-        Channel* channel = server.getChannel(recipient);
+	// Check if the recipient is a valid channel or nickname
+	if (recipient[0] == '#' || server.isChannel(recipient))  // Handle both cases for channel names with/without #
+	{
+		Channel* channel = server.getChannel(recipient);
 
-        if (!channel)
-        {
-            server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such channel");
-            Logger::error("PRIVMSG: No such channel '" + recipient + "'");
-            return;
-        }
+		if (!channel)
+		{
+			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such channel");
+			Logger::error("PRIVMSG: No such channel '" + recipient + "'");
+			return;
+		}
 
-        if (!channel->isMember(&client))
-        {
-            server.sendError(client.getFd(), ERR_CANNOTSENDTOCHAN, recipient + " :Cannot send to channel");
-            Logger::error("PRIVMSG: Client is not a member of channel '" + recipient + "'");
-            return;
-        }
+		if (!channel->isMember(&client))
+		{
+			server.sendError(client.getFd(), ERR_CANNOTSENDTOCHAN, recipient + " :Cannot send to channel");
+			Logger::error("PRIVMSG: Client is not a member of channel '" + recipient + "'");
+			return;
+		}
 
-        // Broadcast the message to all members of the channel, except the sender
-        std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
-        channel->broadcastMessage(fullMessage, &client);
-    }
-    else
-    {
-        Client* targetClient = server.getClientByNickname(recipient);
-        if (!targetClient)
-        {
-            server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such nickname");
-            Logger::error("PRIVMSG: No such nickname '" + recipient + "'");
-            return;
-        }
+		// Broadcast the message to all members of the channel, except the sender
+		std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
+		channel->broadcastMessage(fullMessage, &client);
+	}
+	else
+	{
+		Client* targetClient = server.getClientByNickname(recipient);
+		if (!targetClient)
+		{
+			server.sendError(client.getFd(), ERR_NOSUCHNICK, recipient + " :No such nickname");
+			Logger::error("PRIVMSG: No such nickname '" + recipient + "'");
+			return;
+		}
 
-        // Send the message to the target client
-        std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
-        sendToClient(*targetClient, fullMessage);
-    }
+		// Send the message to the target client
+		std::string fullMessage = ":" + client.getNickname() + " PRIVMSG " + recipient + " :" + message + CRLF;
+		sendToClient(*targetClient, fullMessage);
+	}
 }
 
 
@@ -539,7 +539,8 @@ void IrcCommands::handleKick(Client& client, const std::vector<std::string>& par
 	server.sendRawMessage(targetClient->getFd(), kickMessage);
 }
 
-void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& params) {
+void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& params)
+{
 	if (!client.isRegistered()) {
 		sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered" + CRLF);
 		return;
@@ -561,6 +562,7 @@ void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& pa
 	if (params.size() == 1) { // View topic
 		if (channel->hasTopic()) {
 			sendToClient(client, ":ircserv 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + CRLF);
+			sendToClient(client, ":ircserv 333 " + client.getNickname() + " " + channelName + " " + channel->getTopicSetter() + " " + std::to_string(channel->getTopicTimestamp()) + CRLF);
 		} else {
 			sendToClient(client, ":ircserv 331 " + client.getNickname() + " " + channelName + " :No topic is set" + CRLF);
 		}
@@ -569,11 +571,57 @@ void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& pa
 			sendToClient(client, ":ircserv 482 " + client.getNickname() + " " + channelName + " :You're not a channel operator" + CRLF);
 		} else {
 			std::string newTopic = params[1];
+			for (size_t i = 2; i < params.size(); ++i) {
+				newTopic += " " + params[i];
+			}
+
 			channel->setTopic(newTopic);
-			channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " TOPIC " + channelName + " :" + newTopic + CRLF, &client);
+			channel->setTopicSetter(client.getNickname());
+			channel->setTopicTimestamp(time(NULL));
+
+			// Send topic change message to all users in the channel
+			std::string topicMessage = ":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " TOPIC " + channelName + " :" + newTopic + CRLF;
+			channel->broadcastMessage(topicMessage, nullptr);
 		}
 	}
 }
+
+
+// void IrcCommands::handleTopic(Client& client, const std::vector<std::string>& params) {
+// 	if (!client.isRegistered()) {
+// 		sendToClient(client, ":ircserv 451 " + client.getNickname() + " :You have not registered" + CRLF);
+// 		return;
+// 	}
+
+// 	if (params.size() < 1) {
+// 		sendToClient(client, ":ircserv 461 " + client.getNickname() + " TOPIC :Not enough parameters" + CRLF);
+// 		return;
+// 	}
+
+// 	std::string channelName = params[0];
+// 	Channel* channel = server.getChannel(channelName);
+
+// 	if (!channel) {
+// 		sendToClient(client, ":ircserv 403 " + client.getNickname() + " " + channelName + " :No such channel" + CRLF);
+// 		return;
+// 	}
+
+// 	if (params.size() == 1) { // View topic
+// 		if (channel->hasTopic()) {
+// 			sendToClient(client, ":ircserv 332 " + client.getNickname() + " " + channelName + " :" + channel->getTopic() + CRLF);
+// 		} else {
+// 			sendToClient(client, ":ircserv 331 " + client.getNickname() + " " + channelName + " :No topic is set" + CRLF);
+// 		}
+// 	} else { // Change topic
+// 		if (channel->isTopicRestricted() && !channel->isOperator(&client)) {
+// 			sendToClient(client, ":ircserv 482 " + client.getNickname() + " " + channelName + " :You're not a channel operator" + CRLF);
+// 		} else {
+// 			std::string newTopic = params[1];
+// 			channel->setTopic(newTopic);
+// 			channel->broadcastMessage(":" + client.getNickname() + "!" + client.getUsername() + "@" + client.getHostname() + " TOPIC " + channelName + " :" + newTopic + CRLF, &client);
+// 		}
+// 	}
+// }
 
 void IrcCommands::handleMode(Client& client, const std::vector<std::string>& params) {
 	if (!client.isRegistered()) {

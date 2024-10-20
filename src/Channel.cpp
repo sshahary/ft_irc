@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
+/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:58:11 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/19 18:58:59 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/20 18:27:28 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 
 
 Channel::Channel(const std::string& name)
-	: _name(name),_topic(""), _inviteOnly(false), _key(""), _userLimit(-1), _topicRestricted(false) {}
+	: _name(name),_topic(""), _inviteOnly(false), _key(""), _userLimit(-1), _topicRestricted(false), _topicTimestamp(0) {}
 
 Channel::~Channel() {}
 
@@ -54,6 +54,23 @@ bool Channel::isMember(const Client* client) const {
 
 void Channel::addInvite(Client* client) {
 	_invitedClients.insert(client);
+}
+
+
+void Channel::setTopicSetter(const std::string& setter) {
+	_topicSetter = setter;
+}
+
+std::string Channel::getTopicSetter() const {
+	return _topicSetter;
+}
+
+void Channel::setTopicTimestamp(time_t timestamp) {
+	_topicTimestamp = timestamp;
+}
+
+time_t Channel::getTopicTimestamp() const {
+	return _topicTimestamp;
 }
 
 void Channel::removeMember(Client* client) {

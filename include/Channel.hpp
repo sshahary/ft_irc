@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: snagulap <snagulap@student.42heilbronn.    +#+  +:+       +#+        */
+/*   By: sshahary <sshahary@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:57:58 by snagulap          #+#    #+#             */
-/*   Updated: 2024/10/16 19:18:11 by snagulap         ###   ########.fr       */
+/*   Updated: 2024/10/20 18:25:46 by sshahary         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <ctime>
 
 
 class Server;
@@ -48,6 +49,14 @@ public:
 	bool hasTopic() const;
 	void setTopic(const std::string& topic);
 	std::string getTopic() const;
+	
+	
+	// Methods for topic setter and timestamp
+	void setTopicSetter(const std::string& setter);
+	std::string getTopicSetter() const;
+
+	void setTopicTimestamp(time_t timestamp);
+	time_t getTopicTimestamp() const;
 	bool isInviteOnly() const;
 	bool hasKey() const;
 	std::string getKey() const;
@@ -93,6 +102,8 @@ private:
 	std::set<Client*> _invitedClients;
 	bool _topicRestricted;
 	std::set<int> _operators; // Store operator client FDs
+	std::string _topicSetter;  // Nickname of the client who set the topic
+	time_t _topicTimestamp;    // Time when the topic was set
 };
 
 #endif
