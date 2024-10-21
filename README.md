@@ -8,7 +8,7 @@
 - [Usage](#usage)
 - [Commands](#commands)
 - [Contributing](#contributing)
-- [License](#license)
+  
 
 ## Introduction
 
